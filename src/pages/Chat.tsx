@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { 
@@ -18,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-mobile";
 import ChatMessage from "@/components/ui-custom/ChatMessage";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
@@ -76,24 +76,9 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [isQuickTermsOpen, setIsQuickTermsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  // Check if device is mobile
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth >= 768) {
-        setSidebarOpen(false);
-      }
-    };
-    
-    checkIsMobile();
-    window.addEventListener("resize", checkIsMobile);
-    
-    return () => window.removeEventListener("resize", checkIsMobile);
-  }, []);
+  const isMobile = useIsMobile();
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -175,6 +160,7 @@ const Chat = () => {
                 size="icon"
                 onClick={() => setSidebarOpen(true)}
                 className="mr-2"
+                aria-label="Open sidebar"
               >
                 <Menu className="h-5 w-5" />
               </Button>

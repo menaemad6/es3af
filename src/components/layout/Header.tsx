@@ -38,12 +38,12 @@ const Header = () => {
           : "py-5 bg-transparent"
       }`}
     >
-      <div className="container mx-auto px-6 flex items-center justify-between">
+      <div className="container mx-auto px-4 flex items-center justify-between">
         <Link
           to="/"
-          className="flex items-center gap-2 font-semibold text-2xl"
+          className="flex items-center gap-2 font-semibold text-xl md:text-2xl"
         >
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
+          <div className="w-8 h-8 md:w-10 md:h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
             E
           </div>
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-700 to-primary-500 dark:from-primary-400 dark:to-primary-600">
@@ -93,7 +93,7 @@ const Header = () => {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="flex items-center gap-4 md:hidden">
+        <div className="flex items-center gap-2 md:hidden">
           <Button
             variant="ghost"
             size="icon"
@@ -102,9 +102,9 @@ const Header = () => {
             className="rounded-full"
           >
             {isDarkMode ? (
-              <Sun className="h-5 w-5" />
+              <Sun className="h-4 w-4" />
             ) : (
-              <Moon className="h-5 w-5" />
+              <Moon className="h-4 w-4" />
             )}
           </Button>
           <Button
@@ -115,9 +115,9 @@ const Header = () => {
             className="rounded-full"
           >
             {isMenuOpen ? (
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             ) : (
-              <Menu className="h-5 w-5" />
+              <Menu className="h-4 w-4" />
             )}
           </Button>
         </div>
@@ -125,8 +125,8 @@ const Header = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-40 pt-20 px-6 md:hidden">
-          <nav className="flex flex-col items-center gap-8 py-8">
+        <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-40 pt-16 px-4 md:hidden">
+          <nav className="flex flex-col items-center gap-6 py-6">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
@@ -136,17 +136,18 @@ const Header = () => {
                     ? "text-primary"
                     : "text-foreground/80"
                 }`}
+                onClick={() => setIsMenuOpen(false)}
               >
                 {link.name}
               </Link>
             ))}
             <div className="flex flex-col w-full gap-4 mt-4">
-              <Link to="/login">
+              <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                 <Button variant="outline" className="w-full rounded-full">
                   Login
                 </Button>
               </Link>
-              <Link to="/dashboard">
+              <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
                 <Button className="w-full rounded-full">Get Started</Button>
               </Link>
             </div>
