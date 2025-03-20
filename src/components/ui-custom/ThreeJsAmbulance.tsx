@@ -1,7 +1,7 @@
 
 import { useRef, useEffect } from "react";
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"; // Fixed import with .js extension
 
 const ThreeJsAmbulance = () => {
   const containerRef = useRef<HTMLDivElement>(null);
