@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -11,6 +10,61 @@ import { cn } from "@/lib/utils";
 const About = () => {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const [cursorSize, setCursorSize] = useState(40);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const particlesRef = useRef<HTMLDivElement>(null);
+  
+  // Track cursor position for custom cursor effect
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setCursorPosition({ x: e.clientX, y: e.clientY });
+      
+      // Generate particle on mouse movement (throttled)
+      if (particlesRef.current && Math.random() > 0.7) {
+        const particle = document.createElement('div');
+        particle.className = 'absolute w-1 h-1 rounded-full bg-primary/40 animate-particle';
+        particle.style.left = `${e.clientX}px`;
+        particle.style.top = `${e.clientY}px`;
+        particlesRef.current.appendChild(particle);
+        
+        // Remove particle after animation
+        setTimeout(() => {
+          if (particlesRef.current && particlesRef.current.contains(particle)) {
+            particlesRef.current.removeChild(particle);
+          }
+        }, 1000);
+      }
+    };
+    
+    const handleMouseOver = (e: MouseEvent) => {
+      if (e.target instanceof HTMLElement) {
+        const isClickable = e.target.closest('a, button, [role="button"]');
+        if (isClickable) {
+          setCursorSize(70);
+        } else {
+          setCursorSize(40);
+        }
+      }
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseover', handleMouseOver);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseover', handleMouseOver);
+    };
+  }, []);
+  
+  // Update cursor position
+  useEffect(() => {
+    if (cursorRef.current) {
+      cursorRef.current.style.transform = `translate(${cursorPosition.x}px, ${cursorPosition.y}px)`;
+      cursorRef.current.style.width = `${cursorSize}px`;
+      cursorRef.current.style.height = `${cursorSize}px`;
+    }
+  }, [cursorPosition, cursorSize]);
   
   // Intersection Observer setup for scroll animations
   useEffect(() => {
@@ -133,7 +187,22 @@ const About = () => {
   ];
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col cursor-none">
+      {/* Custom cursor */}
+      <div 
+        ref={cursorRef} 
+        className="fixed pointer-events-none -ml-5 -mt-5 rounded-full mix-blend-difference z-[999] bg-gradient-to-r from-primary/30 to-primary/10 blur-md"
+        style={{ 
+          transform: `translate(${cursorPosition.x}px, ${cursorPosition.y}px)`,
+          width: `${cursorSize}px`,
+          height: `${cursorSize}px`,
+          transition: 'width 0.3s ease, height 0.3s ease'
+        }}
+      />
+      
+      {/* Particles container */}
+      <div ref={particlesRef} className="fixed inset-0 pointer-events-none z-[998]"></div>
+      
       <Header />
       
       {/* Hero Section with moving background */}

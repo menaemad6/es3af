@@ -5,17 +5,20 @@ interface ParallaxEffectProps {
   children: React.ReactNode;
   speed?: number;
   sensitivity?: number;
+  backgroundElements?: boolean;
 }
 
 const ParallaxEffect: React.FC<ParallaxEffectProps> = ({ 
   children, 
   speed = 0.05,
-  sensitivity = 1
+  sensitivity = 1,
+  backgroundElements = false
 }) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [scrollY, setScrollY] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
+  const bgElementsRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -54,12 +57,57 @@ const ParallaxEffect: React.FC<ParallaxEffectProps> = ({
     window.addEventListener('scroll', handleScroll);
     document.body.addEventListener('mouseleave', handleMouseLeave);
     
+    // Create floating background elements if enabled
+    if (backgroundElements && bgElementsRef.current) {
+      const shapes = ['circle', 'square', 'triangle', 'hexagon', 'plus'];
+      const colors = ['primary', 'blue', 'cyan', 'indigo', 'teal'];
+      
+      // Create 15-25 random background elements
+      const numElements = Math.floor(Math.random() * 10) + 15;
+      
+      for (let i = 0; i < numElements; i++) {
+        const shape = shapes[Math.floor(Math.random() * shapes.length)];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const size = Math.floor(Math.random() * 40) + 10; // 10-50px
+        const opacity = (Math.random() * 0.15) + 0.05; // 0.05-0.2
+        const left = `${Math.random() * 100}%`;
+        const top = `${Math.random() * 100}%`;
+        const animDuration = `${Math.random() * 20 + 10}s`; // 10-30s
+        const animDelay = `${Math.random() * 5}s`;
+        const zIndex = Math.floor(Math.random() * 5) - 10; // -10 to -6
+        
+        const element = document.createElement('div');
+        element.className = `absolute rounded-lg bg-${color}-500/10 backdrop-blur-3xl floating-element`;
+        element.style.width = `${size}px`;
+        element.style.height = `${size}px`;
+        element.style.left = left;
+        element.style.top = top;
+        element.style.opacity = opacity.toString();
+        element.style.zIndex = zIndex.toString();
+        element.style.animation = `float ${animDuration} ease-in-out infinite`;
+        element.style.animationDelay = animDelay;
+        
+        // Apply different shapes
+        if (shape === 'circle') {
+          element.style.borderRadius = '50%';
+        } else if (shape === 'triangle') {
+          element.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
+        } else if (shape === 'hexagon') {
+          element.style.clipPath = 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)';
+        } else if (shape === 'plus') {
+          element.style.clipPath = 'polygon(35% 0%, 65% 0%, 65% 35%, 100% 35%, 100% 65%, 65% 65%, 65% 100%, 35% 100%, 35% 65%, 0% 65%, 0% 35%, 35% 35%)';
+        }
+        
+        bgElementsRef.current.appendChild(element);
+      }
+    }
+    
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('scroll', handleScroll);
       document.body.removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, []);
+  }, [backgroundElements]);
   
   useEffect(() => {
     if (containerRef.current) {
@@ -77,6 +125,18 @@ const ParallaxEffect: React.FC<ParallaxEffectProps> = ({
         (layer as HTMLElement).style.transform = `translate3d(${translateX}px, ${translateY}px, ${translateZ}px)`;
       });
     }
+    
+    // Update floating background elements
+    if (bgElementsRef.current) {
+      const elements = bgElementsRef.current.querySelectorAll('.floating-element');
+      elements.forEach((el: Element) => {
+        const depth = Math.random() * 0.2 + 0.1; // Random depth between 0.1-0.3
+        const moveX = mousePosition.x * depth * 0.01;
+        const moveY = mousePosition.y * depth * 0.01;
+        
+        (el as HTMLElement).style.transform = `translate(${moveX}px, ${moveY}px)`;
+      });
+    }
   }, [mousePosition, scrollY, speed, sensitivity]);
   
   return (
@@ -86,6 +146,11 @@ const ParallaxEffect: React.FC<ParallaxEffectProps> = ({
         className="fixed pointer-events-none w-10 h-10 -ml-5 -mt-5 rounded-full bg-gradient-to-r from-primary/10 to-primary/20 blur-md z-[999] opacity-0 transition-opacity duration-300"
         style={{ transition: 'left 0.1s ease-out, top 0.1s ease-out' }}
       />
+      {backgroundElements && (
+        <div ref={bgElementsRef} className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Floating background elements will be injected here */}
+        </div>
+      )}
       <div ref={containerRef} className="parallax-container relative">
         {children}
       </div>
