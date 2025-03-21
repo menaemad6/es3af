@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Plus, 
   Search, 
@@ -18,6 +18,14 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
+import { useAuth } from "@clerk/clerk-react";
+import { toast } from "sonner";
+
+import { useUserChats } from "@/hooks/useUserChats"
+import { useDeleteChat } from "@/hooks/useDeleteChat"
+import { useCreateChat } from "@/hooks/useCreateChat"
+
+const APP_LANG = import.meta.env.VITE_APP_LANG;
 
 interface RecentChat {
   id: string;
@@ -85,6 +93,21 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   
+
+  const { userId, isLoaded } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isLoaded && !userId){
+      navigate("/login" , {replace : true})
+      toast.error("You must be logged in to access this page.", {
+        duration: 4000, // Duration in milliseconds (optional)
+        position: "top-center", // Position of the toast (optional)
+      });
+    }
+  } , [userId , isLoaded , navigate])
+
+
   useEffect(() => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -95,6 +118,17 @@ const Dashboard = () => {
     
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
+
+  const { data:userChats, isLoading: isLoadingUserChats, error } = useUserChats(userId);
+  const { mutate: createChat, isPending: isCreatingChat } = useCreateChat();
+
+
+  const handleCreateChat = (e) => {
+    e.preventDefault();
+    createChat({ userId, title: `${APP_LANG === 'en' ?  "New Chat" : "محادثة جيدة"}${userChats ? " #" + (userChats.length + 1) : ''}` });
+
+  }
+
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -155,7 +189,7 @@ const Dashboard = () => {
             
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              <Link to="/chat/new">
+              <Link onClick={(e) => handleCreateChat(e) } to="/" >
                 <Card className="hover:shadow-md transition-shadow hover:border-primary/20">
                   <CardContent className="p-6 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">

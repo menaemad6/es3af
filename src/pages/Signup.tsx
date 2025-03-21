@@ -1,10 +1,10 @@
 
 import { Link, useNavigate } from "react-router-dom";
-import { SignIn, useAuth } from "@clerk/clerk-react";
+import { SignUp, useAuth } from "@clerk/clerk-react";
 import { useEffect } from "react";
 
 
-const Login = () => {
+const Signup = () => {
   const { userId, isLoaded } = useAuth();
   const navigate = useNavigate();
 
@@ -14,6 +14,7 @@ const Login = () => {
       navigate("/dashboard")
     }
   } , [userId , isLoaded , navigate])
+  
   
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
@@ -39,7 +40,7 @@ const Login = () => {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold">Welcome to Es3af</h1>
           <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Sign in to continue to your medical AI assistant
+            Sign up to continue to your medical AI assistant
           </p>
         </div>
         
@@ -47,12 +48,7 @@ const Login = () => {
 
           
         <div className="h-full w-full flex items-center justify-center">
-      <SignIn
-        path="/login"
-        signUpUrl="/signup"
-        forceRedirectUrl="/dashboard"
-
-      />
+        <SignUp path="/signup" signInUrl="/login" forceRedirectUrl="/dashboard"/>
     </div>
 
 
@@ -279,4 +275,4 @@ const Login = () => {
 
 
 
-export default Login;
+export default Signup;

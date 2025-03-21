@@ -1,10 +1,20 @@
 
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { PlusCircle, MessageCircle, Clock, Settings, X, ChevronLeft } from "lucide-react";
+import { useAuth, useUser } from "@clerk/clerk-react";
+
+
+
+import { useUserChats } from "@/hooks/useUserChats"
+import { useDeleteChat } from "@/hooks/useDeleteChat"
+import { useCreateChat } from "@/hooks/useCreateChat"
+import { Skeleton } from "../ui/skeleton";
+
+import LoadingSpinner from "@/components/ui/LoadingSpinner"
 
 interface ChatPreview {
   id: string;
@@ -14,49 +24,50 @@ interface ChatPreview {
   isUnread?: boolean;
 }
 
-// Sample data for recent chats
-const recentChats: ChatPreview[] = [
-  {
-    id: "1",
-    title: "Cardiovascular System",
-    lastMessage: "What are the symptoms of acute myocardial infarction?",
-    timestamp: "2 hours ago",
-    isUnread: true,
-  },
-  {
-    id: "2",
-    title: "Neurological Disorders",
-    lastMessage: "Can you explain the pathophysiology of Parkinson's disease?",
-    timestamp: "Yesterday",
-  },
-  {
-    id: "3",
-    title: "Respiratory Conditions",
-    lastMessage: "What's the difference between COPD and asthma?",
-    timestamp: "2 days ago",
-  },
-  {
-    id: "4",
-    title: "Endocrine System",
-    lastMessage: "How does insulin resistance develop in Type 2 diabetes?",
-    timestamp: "1 week ago",
-  },
-  {
-    id: "5",
-    title: "Pharmacology",
-    lastMessage: "What are the main classes of antihypertensive medications?",
-    timestamp: "2 weeks ago",
-  },
-];
-
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+const APP_LANG = import.meta.env.VITE_APP_LANG;
+
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const location = useLocation();
   const [mounted, setMounted] = useState(false);
+
+
+  const [deletedChatId, setDeletedChatId] = useState(null);
+  const currentChatId = useParams()?.id || null;
+  const navigate = useNavigate();
+
+  const { userId, isLoaded } = useAuth();
+  const { user } = useUser();
+
+  const { data:userChats, isLoading: isLoadingUserChats, error } = useUserChats(user?.id);
+  const { mutate: deleteChat, isPending: isDeleting } = useDeleteChat();
+  const { mutate: createChat, isPending: isCreatingChat } = useCreateChat();
+
+  const handleCreateNewChat = (e) => {
+    e.preventDefault();
+    createChat({ userId: user.id, title: `${APP_LANG === 'en' ?  "New Chat" : "محادثة جيدة"}${userChats ? " #" + (userChats.length + 1) : ''}` });
+  }
+
+  const handleNavigateToDashboard = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate("/dashboard");
+  }
+
+  
+  const handleDeleteChat = (e, chatId) => {
+    e.stopPropagation();
+    e.preventDefault();
+    deleteChat({ chatId, userId: user.id });
+    if (currentChatId === chatId) navigate("/dashboard");
+    setDeletedChatId(chatId);
+  };
+  
+
 
   useEffect(() => {
     setMounted(true);
@@ -101,7 +112,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={onClose}
+              onClick={(e) => handleNavigateToDashboard(e)}
               className="hidden md:flex"
               aria-label="Collapse sidebar"
             >
@@ -110,12 +121,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           </div>
           
           <div className="p-4">
-            <Link to="/chat/new">
-              <Button className="w-full justify-start gap-2">
+              <Button className="w-full justify-start gap-2" onClick={(e) => handleCreateNewChat(e)}>
+                {isCreatingChat ? <div className="text-center flex justify-center w-full"><LoadingSpinner /></div> : <>
                 <PlusCircle className="h-4 w-4" />
                 New Chat
+                </>}
               </Button>
-            </Link>
           </div>
           
           <nav className="flex-1 overflow-hidden">
@@ -125,7 +136,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               </h2>
               <ScrollArea className="h-[calc(100vh-180px)]">
                 <div className="space-y-1 p-2">
-                  {recentChats.map((chat) => (
+                  
+                  {isLoadingUserChats || !isLoaded && Array.from({ length: 6 }).map((_, index) => (
+        <Skeleton key={index} className="h-10 w-full" />
+      ))}
+                  {isLoaded && userId &&  userChats && userChats.map((chat) => (
                     <Link 
                       key={chat.id}
                       to={`/chat/${chat.id}`}
@@ -138,17 +153,20 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                       <div className="flex justify-between items-start mb-1">
                         <span className="font-medium truncate">{chat.title}</span>
                         <span className="text-[10px] text-sidebar-foreground/60 whitespace-nowrap ml-1">
-                          {chat.timestamp}
+                          {new Date(chat.created_at).toDateString()}
                         </span>
                       </div>
-                      <p className="text-xs text-sidebar-foreground/60 truncate">
+                      {/* <p className="text-xs text-sidebar-foreground/60 truncate">
                         {chat.lastMessage}
-                      </p>
-                      {chat.isUnread && (
+                      </p> */}
+                      {/* {chat.isUnread && (
                         <span className="block w-2 h-2 bg-primary rounded-full ml-auto mt-1" />
-                      )}
+                      )} */}
                     </Link>
                   ))}
+
+{isLoaded && userId && !userChats?.length && <div className="flex justify-center text-md md:text-lg text-primary-900 mt-3">No Recent Chats</div> }
+
                 </div>
               </ScrollArea>
             </div>
@@ -156,13 +174,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           
           <div className="p-4 border-t border-sidebar-border">
             <div className="flex justify-between">
-              <Button variant="ghost" size="icon" aria-label="Recent chats">
+              <Button variant="ghost" size="icon" aria-label="Recent chats" onClick={(e) => handleNavigateToDashboard(e)}>
                 <Clock className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" aria-label="All conversations">
+              <Button variant="ghost" size="icon" aria-label="All conversations" onClick={(e) => handleNavigateToDashboard(e)}>
                 <MessageCircle className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" aria-label="Settings">
+              <Button variant="ghost" size="icon" aria-label="Settings" onClick={(e) => handleNavigateToDashboard(e)}>
                 <Settings className="h-4 w-4" />
               </Button>
             </div>

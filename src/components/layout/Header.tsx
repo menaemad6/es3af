@@ -1,15 +1,20 @@
 
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, Menu, X } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
+import { SignedIn, useAuth, UserButton } from "@clerk/clerk-react";
 
 const Header = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+
+
+  const { userId, isLoaded } = useAuth();
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -82,6 +87,8 @@ const Header = () => {
               <Moon className="h-5 w-5" />
             )}
           </Button>
+
+            { !userId && <>
           <Link to="/login">
             <Button variant="outline" className="rounded-full">
               Login
@@ -90,10 +97,20 @@ const Header = () => {
           <Link to="/dashboard">
             <Button className="rounded-full">Get Started</Button>
           </Link>
+            </>}
+
+          <Link to="/dashboard">
+          <SignedIn>
+                <UserButton />
+          </SignedIn>
+          </Link>
+
+
+
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-2 md:hidden ">
           <Button
             variant="ghost"
             size="icon"
@@ -125,8 +142,8 @@ const Header = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-40 pt-16 px-4 md:hidden">
-          <nav className="flex flex-col items-center gap-6 py-6">
+        <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-40 pt-16 px-4 md:hidden ">
+          <nav className="flex flex-col items-center gap-6 py-10 bg-primary-100 rounded-lg px-4">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
