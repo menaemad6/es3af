@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Brain, BrainCircuit, Microscope, MessageSquare, LightbulbIcon, HeartPulse, ShieldPlus, ActivitySquare, Dna, TestTube, Sparkles } from "lucide-react";
@@ -18,6 +17,61 @@ const Index = () => {
   const [demoMessage, setDemoMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [scrollY, setScrollY] = useState(0);
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const [cursorSize, setCursorSize] = useState(40);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const particlesRef = useRef<HTMLDivElement>(null);
+  
+  // Track cursor position for custom cursor effect
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setCursorPosition({ x: e.clientX, y: e.clientY });
+      
+      // Generate particle on mouse movement (throttled)
+      if (particlesRef.current && Math.random() > 0.7) {
+        const particle = document.createElement('div');
+        particle.className = 'absolute w-1 h-1 rounded-full bg-primary/40 animate-particle';
+        particle.style.left = `${e.clientX}px`;
+        particle.style.top = `${e.clientY}px`;
+        particlesRef.current.appendChild(particle);
+        
+        // Remove particle after animation
+        setTimeout(() => {
+          if (particlesRef.current && particlesRef.current.contains(particle)) {
+            particlesRef.current.removeChild(particle);
+          }
+        }, 1000);
+      }
+    };
+    
+    const handleMouseOver = (e: MouseEvent) => {
+      if (e.target instanceof HTMLElement) {
+        const isClickable = e.target.closest('a, button, [role="button"]');
+        if (isClickable) {
+          setCursorSize(70);
+        } else {
+          setCursorSize(40);
+        }
+      }
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseover', handleMouseOver);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseover', handleMouseOver);
+    };
+  }, []);
+  
+  // Update cursor position
+  useEffect(() => {
+    if (cursorRef.current) {
+      cursorRef.current.style.transform = `translate(${cursorPosition.x}px, ${cursorPosition.y}px)`;
+      cursorRef.current.style.width = `${cursorSize}px`;
+      cursorRef.current.style.height = `${cursorSize}px`;
+    }
+  }, [cursorPosition, cursorSize]);
   
   // Track scroll position for parallax effect
   useEffect(() => {
@@ -114,7 +168,22 @@ const Index = () => {
   ];
   
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background via-background to-background/80">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background via-background to-background/80 cursor-none">
+      {/* Custom cursor */}
+      <div 
+        ref={cursorRef} 
+        className="fixed pointer-events-none -ml-5 -mt-5 rounded-full mix-blend-difference z-[999] bg-gradient-to-r from-primary/30 to-primary/10 blur-md"
+        style={{ 
+          transform: `translate(${cursorPosition.x}px, ${cursorPosition.y}px)`,
+          width: `${cursorSize}px`,
+          height: `${cursorSize}px`,
+          transition: 'width 0.3s ease, height 0.3s ease'
+        }}
+      />
+      
+      {/* Particles container */}
+      <div ref={particlesRef} className="fixed inset-0 pointer-events-none z-[998]"></div>
+      
       <Header />
       
       {/* Hero Section with animated background and parallax */}
@@ -123,51 +192,84 @@ const Index = () => {
           {/* Animated background */}
           <div className="absolute w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-background to-background"></div>
           
-          {/* Neural network pattern */}
-          <div className="absolute inset-0 opacity-[0.05] dark:opacity-[0.07]">
-            <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+          {/* Dynamic grid pattern */}
+          <div className="absolute inset-0 grid-pattern">
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1"/>
+                <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-primary/10" />
                 </pattern>
-                <pattern id="dots" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <circle cx="20" cy="20" r="1" fill="currentColor"/>
+                <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
+                  <rect width="100" height="100" fill="url(#smallGrid)" />
+                  <path d="M 100 0 L 0 0 0 100" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary/20" />
                 </pattern>
               </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-              <rect width="100%" height="100%" fill="url(#dots)" />
+              <rect width="100%" height="100%" fill="url(#grid)" className="opacity-30" />
             </svg>
           </div>
             
-          {/* Glow orbs */}
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[100px] animate-pulse-slow"></div>
-          <div className="absolute bottom-1/3 right-1/3 w-80 h-80 bg-blue-300/5 dark:bg-blue-400/5 rounded-full blur-[100px] animate-pulse-slow" style={{ animationDelay: "1.5s" }}></div>
-          <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-green-300/5 dark:bg-green-400/5 rounded-full blur-[100px] animate-pulse-slow" style={{ animationDelay: "2.7s" }}></div>
+          {/* Animated glow orbs */}
+          <div 
+            className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] animate-pulse-slow transition-all duration-1000"
+            style={{ transform: `translateY(${scrollY * 0.05}px)` }}
+          ></div>
+          <div 
+            className="absolute bottom-1/3 right-1/3 w-80 h-80 bg-blue-300/10 dark:bg-blue-400/10 rounded-full blur-[100px] animate-pulse-slow transition-all duration-1000" 
+            style={{ animationDelay: "1.5s", transform: `translateY(${scrollY * -0.03}px)` }}
+          ></div>
+          <div 
+            className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-green-300/10 dark:bg-green-400/10 rounded-full blur-[100px] animate-pulse-slow transition-all duration-1000" 
+            style={{ animationDelay: "2.7s", transform: `translateY(${scrollY * 0.02}px)` }}
+          ></div>
           
-          {/* Moving particles */}
-          <div className="particles absolute inset-0 z-0 opacity-30">
-            {[...Array(20)].map((_, i) => (
+          {/* Dynamic particles */}
+          <div className="particles absolute inset-0 z-0 opacity-50">
+            {[...Array(50)].map((_, i) => (
               <div 
                 key={i}
-                className="particle absolute w-1 h-1 bg-primary/40 rounded-full"
+                className="particle absolute w-1 h-1 bg-primary/60 rounded-full"
                 style={{
                   top: `${Math.random() * 100}%`,
                   left: `${Math.random() * 100}%`,
-                  animation: `float ${3 + Math.random() * 7}s linear infinite`,
+                  animation: `floatParticle ${3 + Math.random() * 7}s linear infinite`,
                   animationDelay: `${Math.random() * 5}s`,
-                  opacity: Math.random() * 0.8 + 0.2
+                  opacity: Math.random() * 0.8 + 0.2,
+                  transform: `translateY(${scrollY * (Math.random() * 0.05)}px)`
                 }}
               />
             ))}
           </div>
             
+          {/* Neural network lines */}
+          <svg className="absolute inset-0 w-full h-full z-0 opacity-30">
+            {[...Array(15)].map((_, i) => {
+              const x1 = Math.random() * 100;
+              const y1 = Math.random() * 100;
+              const x2 = Math.random() * 100;
+              const y2 = Math.random() * 100;
+              return (
+                <path 
+                  key={i}
+                  d={`M${x1}%,${y1}% Q${(x1+x2)/2+Math.random()*20-10}%,${(y1+y2)/2+Math.random()*20-10}% ${x2}%,${y2}%`}
+                  stroke="currentColor"
+                  strokeWidth="0.5"
+                  className="text-primary/30 neural-line"
+                  style={{
+                    animation: `pulseLine ${3 + Math.random() * 4}s infinite`,
+                    animationDelay: `${Math.random() * 5}s`
+                  }}
+                />
+              );
+            })}
+          </svg>
+            
           {/* Floating icons with parallax */}
-          <ParallaxEffect>
+          <ParallaxEffect sensitivity={1.5}>
             {floatingIcons.map((item, index) => (
               <div 
                 key={index}
                 className={cn(
-                  "absolute opacity-20 animate-float parallax-layer", 
+                  "absolute opacity-30 animate-float parallax-layer", 
                   item.top, 
                   item.left
                 )}
@@ -190,7 +292,7 @@ const Index = () => {
                 <div className="overflow-hidden">
                   <Badge 
                     variant="outline" 
-                    className="px-3 py-1 text-sm border-primary/20 bg-primary/5 text-primary animate-fade-up" 
+                    className="px-3 py-1 text-sm border-primary/20 bg-primary/5 text-primary animate-fade-up backdrop-blur-sm" 
                     style={{ animationDelay: "0.1s" }}
                   >
                     AI-Powered Medical Assistant
@@ -267,8 +369,8 @@ const Index = () => {
             
             <div className="order-1 lg:order-2 h-[400px] lg:h-[500px] overflow-hidden rounded-3xl animate-fade-left relative" style={{ animationDelay: "0.5s" }}>
               {/* Modern AI medical visualization */}
-              <div className="absolute inset-0 glass-card glow-border">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent z-10 pointer-events-none"></div>
+              <div className="absolute inset-0 glass-card glow-border group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent z-10 pointer-events-none transition-all duration-500 group-hover:from-primary/10"></div>
                 
                 <div className="relative h-full w-full p-6 flex flex-col">
                   {/* Brain neural network visualization */}
@@ -276,68 +378,84 @@ const Index = () => {
                     {/* Medical neural network animation */}
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="relative w-64 h-64">
-                        {/* Brain outline */}
-                        <svg viewBox="0 0 200 200" className="w-full h-full opacity-20">
-                          <path d="M100,20 C140,20 170,50 170,90 C170,130 140,160 100,160 C60,160 30,130 30,90 C30,50 60,20 100,20 Z" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary"/>
-                          <path d="M100,30 C135,30 160,55 160,90 C160,125 135,150 100,150 C65,150 40,125 40,90 C40,55 65,30 100,30 Z" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-primary"/>
-                          <path d="M100,40 C130,40 150,60 150,90 C150,120 130,140 100,140 C70,140 50,120 50,90 C50,60 70,40 100,40 Z" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-primary"/>
-                        </svg>
-                        
-                        {/* Animated nodes */}
-                        {[...Array(20)].map((_, i) => (
-                          <div 
-                            key={i}
-                            className="absolute w-2 h-2 rounded-full bg-primary animate-pulse"
-                            style={{
-                              top: `${20 + Math.random() * 60}%`,
-                              left: `${20 + Math.random() * 60}%`,
-                              animationDelay: `${Math.random() * 3}s`,
-                              opacity: 0.3 + Math.random() * 0.7
-                            }}
-                          />
-                        ))}
-                        
-                        {/* Animated connections */}
-                        <svg className="absolute inset-0 w-full h-full">
-                          {[...Array(30)].map((_, i) => {
-                            const x1 = 20 + Math.random() * 60;
-                            const y1 = 20 + Math.random() * 60;
-                            const x2 = 20 + Math.random() * 60;
-                            const y2 = 20 + Math.random() * 60;
+                        {/* Brain outline with interactive elements */}
+                        <svg viewBox="0 0 200 200" className="w-full h-full opacity-30 brain-outline">
+                          <path d="M100,20 C140,20 170,50 170,90 C170,130 140,160 100,160 C60,160 30,130 30,90 C30,50 60,20 100,20 Z" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary animate-pulse-slow" style={{ animationDuration: '5s' }}/>
+                          <path d="M100,30 C135,30 160,55 160,90 C160,125 135,150 100,150 C65,150 40,125 40,90 C40,55 65,30 100,30 Z" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-primary animate-pulse-slow" style={{ animationDuration: '7s', animationDelay: '0.5s' }}/>
+                          <path d="M100,40 C130,40 150,60 150,90 C150,120 130,140 100,140 C70,140 50,120 50,90 C50,60 70,40 100,40 Z" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-primary animate-pulse-slow" style={{ animationDuration: '6s', animationDelay: '1s' }}/>
+                          
+                          {/* Interactive neural connections that respond to scroll */}
+                          {[...Array(8)].map((_, i) => {
+                            const startAngle = (i / 8) * Math.PI * 2;
+                            const endAngle = ((i + 3) / 8) * Math.PI * 2;
+                            const radius = 70;
+                            
+                            const x1 = 100 + Math.cos(startAngle) * radius;
+                            const y1 = 100 + Math.sin(startAngle) * radius;
+                            const x2 = 100 + Math.cos(endAngle) * radius;
+                            const y2 = 100 + Math.sin(endAngle) * radius;
                             
                             return (
                               <path 
                                 key={i}
-                                d={`M${x1},${y1} L${x2},${y2}`}
+                                d={`M${x1},${y1} Q${100},${100} ${x2},${y2}`}
                                 stroke="currentColor"
                                 strokeWidth="0.5"
-                                className="text-primary/30"
+                                className="text-primary neural-connection"
                                 style={{
-                                  animation: `pulse 3s infinite`,
-                                  animationDelay: `${Math.random() * 3}s`
+                                  opacity: 0.5 + Math.sin(scrollY * 0.01 + i) * 0.3,
+                                  strokeDasharray: '5,5',
+                                  strokeDashoffset: scrollY * 0.2 % 10
                                 }}
                               />
                             );
                           })}
                         </svg>
+                        
+                        {/* Animated nodes with scroll-based pulsing */}
+                        {[...Array(20)].map((_, i) => {
+                          const angle = (i / 20) * Math.PI * 2;
+                          const distance = 30 + Math.random() * 30;
+                          const x = 100 + Math.cos(angle) * distance;
+                          const y = 100 + Math.sin(angle) * distance;
                           
-                        {/* Central brain icon */}
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-primary">
-                          <BrainCircuit size={64} className="opacity-75 animate-pulse" style={{ animationDuration: '3s' }} />
+                          return (
+                            <div 
+                              key={i}
+                              className="absolute w-2 h-2 rounded-full bg-primary animate-pulse neural-node"
+                              style={{
+                                left: `${x}px`,
+                                top: `${y}px`,
+                                animationDelay: `${i * 0.2}s`,
+                                opacity: 0.3 + Math.sin(scrollY * 0.005 + i) * 0.3,
+                                transform: `scale(${1 + Math.sin(scrollY * 0.01 + i * 0.5) * 0.2})`
+                              }}
+                            />
+                          );
+                        })}
+                          
+                        {/* Animated brain icon */}
+                        <div 
+                          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-primary"
+                          style={{
+                            transform: `translate(-50%, -50%) scale(${1 + Math.sin(scrollY * 0.005) * 0.1})`,
+                            filter: `drop-shadow(0 0 ${5 + Math.sin(scrollY * 0.01) * 3}px currentColor)`
+                          }}
+                        >
+                          <BrainCircuit size={64} className="opacity-75" />
                         </div>
                       </div>
                     </div>
                       
-                    {/* Data visualization */}
+                    {/* Interactive data visualization */}
                     <div className="absolute bottom-0 left-0 right-0 h-24 flex items-end p-4">
-                      {[...Array(20)].map((_, i) => (
+                      {[...Array(30)].map((_, i) => (
                         <div 
                           key={i}
-                          className="w-[3px] mx-[2px] rounded-t-full bg-primary/60"
+                          className="w-[2px] mx-[1px] rounded-t-full bg-primary/60"
                           style={{ 
-                            height: `${10 + Math.sin(i/3) * 50}%`,
-                            animation: 'animate-pulse',
-                            animationDelay: `${i * 0.1}s`
+                            height: `${10 + Math.sin(i/2 + scrollY * 0.02) * 40}%`,
+                            opacity: 0.3 + Math.sin(i/5 + scrollY * 0.01) * 0.5
                           }}
                         />
                       ))}
@@ -349,10 +467,13 @@ const Index = () => {
                     {[...Array(3)].map((_, i) => (
                       <div 
                         key={i} 
-                        className="h-14 rounded-lg glass-card flex flex-col justify-center p-3"
+                        className="h-14 rounded-lg glass-card flex flex-col justify-center p-3 group"
+                        style={{
+                          transform: `translateY(${Math.sin(scrollY * 0.01 + i) * 5}px)`
+                        }}
                       >
-                        <div className="h-2 w-1/2 bg-primary/20 rounded-full mb-2"></div>
-                        <div className="h-2 w-3/4 bg-primary/10 rounded-full"></div>
+                        <div className="h-2 w-1/2 bg-primary/20 rounded-full mb-2 group-hover:w-3/4 transition-all duration-500"></div>
+                        <div className="h-2 w-3/4 bg-primary/10 rounded-full group-hover:w-1/2 transition-all duration-500"></div>
                       </div>
                     ))}
                   </div>
@@ -365,7 +486,7 @@ const Index = () => {
       
       {/* Interactive Chat Demo Section */}
       <section className="py-16 lg:py-20 relative overflow-hidden">
-        <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800/80"></div>
           <div className="absolute w-full h-full bg-grid-pattern opacity-[0.03] dark:opacity-[0.05]"></div>
           <div className="absolute bottom-0 right-0 w-full h-1/2 bg-gradient-to-t from-background to-transparent"></div>
@@ -388,8 +509,8 @@ const Index = () => {
             </p>
           </div>
           
-          <div className="max-w-4xl mx-auto futuristic-card animate-on-scroll fade-up">
-            <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-primary/10 to-transparent opacity-60"></div>
+          <div className="max-w-4xl mx-auto futuristic-card animate-on-scroll fade-up group">
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 to-transparent opacity-60 group-hover:from-primary/10 transition-all duration-500"></div>
             
             <div className="bg-primary/10 p-3 backdrop-blur-sm flex items-center gap-2 relative">
               <div className="flex gap-1.5">
@@ -400,7 +521,7 @@ const Index = () => {
               <div className="ml-2 text-sm font-medium">Es3af Medical Chat</div>
             </div>
             
-            <div className="p-6 h-[350px] flex flex-col relative">
+            <div className="p-6 h-[350px] flex flex-col relative backdrop-blur-sm bg-background/50">
               <div className="flex-1 space-y-4 overflow-y-auto pr-2">
                 <div className="flex items-start max-w-[80%] animate-fade-in opacity-100" style={{ animationDuration: "0.5s" }}>
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2 mt-1 flex-shrink-0 shadow-sm">
@@ -445,7 +566,7 @@ const Index = () => {
                           )}
                         </div>
                         <div className="mt-1 ml-1">
-                          <span className="text-xs text-gray-500">Es3af AI • Typing...</span>
+                          <span className="text-xs text-gray-500">Es3af AI • {isTyping ? "Typing..." : "Just now"}</span>
                         </div>
                       </div>
                     </div>
@@ -457,9 +578,12 @@ const Index = () => {
                 <Button 
                   onClick={() => setShowDemo(true)} 
                   disabled={showDemo}
-                  className="w-full transition-all duration-300 hover:shadow-md bg-gradient-to-r from-primary to-blue-600 hover:opacity-90"
+                  className="w-full transition-all duration-300 hover:shadow-md bg-gradient-to-r from-primary to-blue-600 hover:opacity-90 relative overflow-hidden group"
                 >
-                  {showDemo ? "Chat Demo Running..." : "Start Chat Demo"}
+                  <span className="relative z-10">
+                    {showDemo ? "Chat Demo Running..." : "Start Chat Demo"}
+                  </span>
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></span>
                 </Button>
               </div>
             </div>
@@ -470,158 +594,3 @@ const Index = () => {
       {/* Features Section with scroll-triggered animations */}
       <section className="py-16 lg:py-24 relative overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-background to-primary/5"></div>
-          <div className="absolute w-full h-full bg-grid-pattern opacity-[0.03] dark:opacity-[0.05]"></div>
-        </div>
-        
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-block animate-on-scroll fade-up">
-              <Badge variant="outline" className="px-4 py-1.5 text-sm font-medium border-primary/20 bg-primary/5 text-primary mb-4">
-                Powerful Features
-              </Badge>
-            </div>
-            
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 animate-on-scroll fade-up">
-              Elevate Your <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-400 dark:from-primary-400 dark:to-primary-600">Medical Knowledge</span>
-            </h2>
-            
-            <p className="text-gray-600 dark:text-gray-300 animate-on-scroll fade-up">
-              Es3af combines cutting-edge AI technology with comprehensive medical knowledge to provide an invaluable resource for medical students and professionals.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <div 
-                key={index} 
-                className="animate-on-scroll fade-up scale-up"
-                style={{ animationDelay: `${0.1 * index}s` }}
-              >
-                <div className="h-full futuristic-card group hover:translate-y-[-8px]">
-                  <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  
-                  <CardContent className="p-6 relative z-10">
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-4 group-hover:from-primary/30 group-hover:to-primary/10 transition-all duration-500 shadow-sm">
-                      <feature.icon className="h-6 w-6 text-primary" />
-                    </div>
-                    
-                    <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors duration-300">{feature.title}</h3>
-                    <p className="text-gray-600 dark:text-gray-300">{feature.description}</p>
-                  </CardContent>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      
-      {/* How It Works Section with animations */}
-      <section className="py-16 lg:py-24 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800/80"></div>
-          <div className="absolute w-full h-full bg-grid-pattern opacity-[0.03] dark:opacity-[0.05]"></div>
-        </div>
-        
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-block animate-on-scroll fade-up">
-              <Badge variant="outline" className="px-4 py-1.5 text-sm font-medium border-primary/20 bg-primary/5 text-primary mb-4">
-                Simple Process
-              </Badge>
-            </div>
-            
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 animate-on-scroll fade-up">
-              How <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-400 dark:from-primary-400 dark:to-primary-600">Es3af</span> Works
-            </h2>
-            
-            <p className="text-gray-600 dark:text-gray-300 animate-on-scroll fade-up">
-              Getting accurate medical information has never been easier. Es3af provides a seamless experience from question to answer.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                step: 1,
-                title: "Ask Your Question",
-                description: "Type your medical query in natural language, just as you would ask a professor or colleague."
-              },
-              {
-                step: 2,
-                title: "AI Processing",
-                description: "Our advanced AI analyzes your question and searches through validated medical knowledge."
-              },
-              {
-                step: 3,
-                title: "Receive Accurate Answer",
-                description: "Get a detailed, evidence-based response that helps deepen your understanding of the topic."
-              }
-            ].map((item, index) => (
-              <div 
-                key={index}
-                className="animate-on-scroll fade-up"
-                style={{ animationDelay: `${0.1 * index}s` }}
-              >
-                <div className="h-full futuristic-card group hover:translate-y-[-8px]">
-                  <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  
-                  <CardContent className="p-8 text-center">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary-600 flex items-center justify-center mx-auto mb-6 text-white font-bold text-xl shadow-lg group-hover:shadow-primary/20 transition-all duration-300">
-                      {item.step}
-                    </div>
-                    <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">{item.title}</h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      {item.description}
-                    </p>
-                  </CardContent>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      
-      {/* CTA Section */}
-      <section className="py-16 lg:py-24 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-400"></div>
-          <div className="absolute w-full h-full bg-grid-pattern opacity-10"></div>
-          
-          {/* Animated background elements */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="container mx-auto px-6 text-center relative z-10">
-          <div className="max-w-3xl mx-auto text-white">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 animate-on-scroll fade-up drop-shadow-md">
-              Ready to Enhance Your Medical Knowledge?
-            </h2>
-            
-            <p className="text-xl opacity-90 mb-8 animate-on-scroll fade-up drop-shadow-sm" style={{ animationDelay: "0.1s" }}>
-              Join medical students worldwide who are using Es3af to study more effectively and gain deeper insights.
-            </p>
-            
-            <div className="animate-on-scroll fade-up" style={{ animationDelay: "0.2s" }}>
-              <Link to="/dashboard">
-                <Button 
-                  size="lg" 
-                  variant="secondary" 
-                  className="text-primary hover:text-primary-600 bg-white hover:bg-white/90 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 px-8 py-6 rounded-full text-lg font-medium"
-                >
-                  Start Using Es3af Now
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      <Footer />
-    </div>
-  );
-};
-
-export default Index;
