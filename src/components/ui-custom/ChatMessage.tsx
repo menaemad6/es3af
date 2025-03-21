@@ -31,7 +31,7 @@ const ChatMessage = ({ content, isUser, timestamp }: ChatMessageProps) => {
     >
       <div className="flex items-start max-w-[80%] group">
         {!isUser && (
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2 mt-1 flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mr-2 mt-1 flex-shrink-0 shadow-sm">
             <Bot size={16} className="text-primary" />
           </div>
         )}
@@ -39,10 +39,10 @@ const ChatMessage = ({ content, isUser, timestamp }: ChatMessageProps) => {
         <div>
           <div
             className={cn(
-              "p-4 rounded-2xl",
+              "p-4 rounded-2xl shadow-sm",
               isUser
-                ? "bg-primary text-primary-foreground rounded-tr-sm"
-                : "bg-secondary text-secondary-foreground rounded-tl-sm"
+                ? "bg-gradient-to-r from-primary to-primary-600 text-primary-foreground rounded-tr-sm"
+                : "bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-700 text-secondary-foreground rounded-tl-sm"
             )}
           >
             <p className="whitespace-pre-wrap break-words">{content}</p>
@@ -70,7 +70,7 @@ const ChatMessage = ({ content, isUser, timestamp }: ChatMessageProps) => {
         </div>
         
         {isUser && (
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-2 mt-1 flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary-600 flex items-center justify-center ml-2 mt-1 flex-shrink-0 shadow-sm">
             <MessageCircle size={16} className="text-white" />
           </div>
         )}

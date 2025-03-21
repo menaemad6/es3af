@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, Menu, X } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
+import { cn } from "@/lib/utils";
 
 const Header = () => {
   const { isDarkMode, toggleTheme } = useTheme();
@@ -32,18 +33,19 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out",
         isScrolled || isMenuOpen
-          ? "py-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg shadow-sm"
-          : "py-5 bg-background/80 dark:bg-background/80 backdrop-blur-md"
-      }`}
+          ? "py-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg shadow-sm"
+          : "py-4 bg-transparent"
+      )}
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
         <Link
           to="/"
           className="flex items-center gap-2 font-semibold text-xl md:text-2xl"
         >
-          <div className="w-8 h-8 md:w-10 md:h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
+          <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-primary to-primary-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
             E
           </div>
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-700 to-primary-500 dark:from-primary-400 dark:to-primary-600">
@@ -57,13 +59,14 @@ const Header = () => {
             <Link
               key={link.path}
               to={link.path}
-              className={`text-sm font-medium transition-all duration-300 relative hover:text-primary ${
+              className={cn(
+                "text-sm font-medium transition-all duration-300 relative hover:text-primary",
                 location.pathname === link.path
                   ? "text-primary"
-                  : "text-foreground/80"
-              } after:absolute after:w-full after:transform after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left ${
+                  : "text-foreground/80",
+                "after:absolute after:w-full after:transform after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left",
                 location.pathname === link.path ? "after:scale-x-100" : ""
-              }`}
+              )}
             >
               {link.name}
             </Link>
@@ -94,7 +97,7 @@ const Header = () => {
           </Link>
           <Link to="/dashboard">
             <Button 
-              className="rounded-full shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5"
+              className="rounded-full shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 bg-gradient-to-r from-primary to-primary-600 hover:opacity-90"
             >
               Get Started
             </Button>
@@ -140,11 +143,14 @@ const Header = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-lg font-medium transition-colors hover:text-primary ${
+                className={cn(
+                  "text-lg font-medium transition-colors hover:text-primary relative",
                   location.pathname === link.path
                     ? "text-primary"
-                    : "text-foreground/80"
-                }`}
+                    : "text-foreground/80",
+                  "after:absolute after:w-full after:transform after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left",
+                  location.pathname === link.path ? "after:scale-x-100" : ""
+                )}
                 onClick={() => setIsMenuOpen(false)}
                 style={{ animationDelay: `${0.05 * (index + 1)}s` }}
               >
@@ -163,7 +169,7 @@ const Header = () => {
               </Link>
               <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
                 <Button 
-                  className="w-full rounded-full animate-fade-up"
+                  className="w-full rounded-full animate-fade-up bg-gradient-to-r from-primary to-primary-600"
                   style={{ animationDelay: "0.25s" }}
                 >
                   Get Started
