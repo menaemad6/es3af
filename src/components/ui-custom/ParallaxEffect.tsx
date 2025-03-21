@@ -42,8 +42,9 @@ const ParallaxEffect: React.FC<ParallaxEffectProps> = ({
       const layers = containerRef.current.querySelectorAll('.parallax-layer');
       
       layers.forEach((layer: Element) => {
-        const depth = (layer as HTMLElement).dataset.depth || 1;
-        const movement = parseFloat(depth) * speed;
+        const depthStr = (layer as HTMLElement).dataset.depth || "1";
+        const depth = parseFloat(depthStr);
+        const movement = depth * speed;
         
         const translateX = mousePosition.x * movement;
         const translateY = mousePosition.y * movement;

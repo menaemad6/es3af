@@ -1,10 +1,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Brain, Stethoscope, Microscope, BookOpen, MessageSquare, LightbulbIcon, HeartPulse, ShieldPlus, ActivitySquare } from "lucide-react";
+import { ArrowRight, Brain, BrainCircuit, Microscope, MessageSquare, LightbulbIcon, HeartPulse, ShieldPlus, ActivitySquare, Dna, TestTube, Sparkles } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import ThreeJsAmbulance from "@/components/ui-custom/ThreeJsAmbulance";
 import AnimatedButton from "@/components/ui-custom/AnimatedButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -86,144 +85,283 @@ const Index = () => {
     { icon: ShieldPlus, color: "text-green-500", top: "top-40", left: "left-[85%]", animationDelay: "1.5s", size: 28 },
     { icon: ActivitySquare, color: "text-blue-500", top: "top-60", left: "left-[10%]", animationDelay: "0.8s", size: 20 },
     { icon: Brain, color: "text-purple-500", top: "top-80", left: "left-[90%]", animationDelay: "2.2s", size: 32 },
-    { icon: Stethoscope, color: "text-primary", top: "top-44", left: "left-[50%]", animationDelay: "1.2s", size: 26 },
+    { icon: Dna, color: "text-primary", top: "top-44", left: "left-[50%]", animationDelay: "1.2s", size: 26 },
+    { icon: TestTube, color: "text-amber-500", top: "top-32", left: "left-[70%]", animationDelay: "1.7s", size: 22 },
+    { icon: Microscope, color: "text-cyan-500", top: "top-72", left: "left-[25%]", animationDelay: "0.5s", size: 30 },
   ];
   
   const features = [
     {
-      title: "Accurate Medical Guidance",
-      description: "Get precise answers to complex medical questions powered by advanced AI technology.",
-      icon: Brain,
+      title: "Advanced Medical AI",
+      description: "Powered by cutting-edge neural networks trained on vast medical datasets for accurate diagnostics and recommendations.",
+      icon: BrainCircuit,
     },
     {
-      title: "Learning Resources",
-      description: "Access a wealth of medical knowledge and educational content to enhance your studies.",
-      icon: BookOpen,
-    },
-    {
-      title: "Clinical Insights",
-      description: "Gain deeper understanding of clinical scenarios and diagnostic approaches.",
-      icon: Stethoscope,
-    },
-    {
-      title: "Evidence-Based Answers",
-      description: "Receive information grounded in the latest medical research and guidelines.",
+      title: "Evidence-Based Learning",
+      description: "Access the latest peer-reviewed medical research and clinical guidelines to support your education.",
       icon: Microscope,
+    },
+    {
+      title: "Clinical Decision Support",
+      description: "Gain deeper understanding of differential diagnoses and treatment approaches in complex medical scenarios.",
+      icon: LightbulbIcon,
+    },
+    {
+      title: "Personalized Education",
+      description: "Adaptive learning technology that evolves with your knowledge to optimize your medical education journey.",
+      icon: Sparkles,
     },
   ];
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background via-background to-background/80">
       <Header />
       
       {/* Hero Section with animated background and parallax */}
-      <ParallaxEffect>
-        <section className="pt-24 lg:pt-32 pb-16 lg:pb-24 relative overflow-hidden min-h-[90vh] flex items-center">
-          <div className="absolute inset-0 -z-10">
-            <div className="absolute w-full h-full bg-gradient-to-b from-background via-primary/5 to-background"></div>
-            <div className="absolute w-full h-full bg-grid-pattern opacity-[0.03] dark:opacity-[0.05]"></div>
+      <section className="pt-24 lg:pt-32 pb-16 lg:pb-24 relative overflow-hidden min-h-[90vh] flex items-center">
+        <div className="absolute inset-0 -z-10">
+          {/* Animated background */}
+          <div className="absolute w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-background to-background"></div>
+          
+          {/* Neural network pattern */}
+          <div className="absolute inset-0 opacity-[0.05] dark:opacity-[0.07]">
+            <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+              <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1"/>
+                </pattern>
+                <pattern id="dots" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <circle cx="20" cy="20" r="1" fill="currentColor"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+              <rect width="100%" height="100%" fill="url(#dots)" />
+            </svg>
+          </div>
             
-            {/* Animated glowing orbs */}
-            <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse-slow"></div>
-            <div className="absolute top-1/3 -left-20 w-60 h-60 bg-blue-300/10 dark:bg-blue-400/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: "1s" }}></div>
-            <div className="absolute bottom-0 right-1/4 w-40 h-40 bg-green-300/10 dark:bg-green-400/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: "2s" }}></div>
+          {/* Glow orbs */}
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[100px] animate-pulse-slow"></div>
+          <div className="absolute bottom-1/3 right-1/3 w-80 h-80 bg-blue-300/5 dark:bg-blue-400/5 rounded-full blur-[100px] animate-pulse-slow" style={{ animationDelay: "1.5s" }}></div>
+          <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-green-300/5 dark:bg-green-400/5 rounded-full blur-[100px] animate-pulse-slow" style={{ animationDelay: "2.7s" }}></div>
+          
+          {/* Moving particles */}
+          <div className="particles absolute inset-0 z-0 opacity-30">
+            {[...Array(20)].map((_, i) => (
+              <div 
+                key={i}
+                className="particle absolute w-1 h-1 bg-primary/40 rounded-full"
+                style={{
+                  top: `${Math.random() * 100}%`,
+                  left: `${Math.random() * 100}%`,
+                  animation: `float ${3 + Math.random() * 7}s linear infinite`,
+                  animationDelay: `${Math.random() * 5}s`,
+                  opacity: Math.random() * 0.8 + 0.2
+                }}
+              />
+            ))}
+          </div>
             
-            {/* Floating icons with parallax */}
+          {/* Floating icons with parallax */}
+          <ParallaxEffect>
             {floatingIcons.map((item, index) => (
               <div 
                 key={index}
                 className={cn(
-                  "absolute opacity-20 animate-float", 
+                  "absolute opacity-20 animate-float parallax-layer", 
                   item.top, 
-                  item.left,
-                  `parallax-layer parallax-depth-${(index % 4) + 1}`
+                  item.left
                 )}
+                data-depth={`${(index % 4) + 1}`}
                 style={{ 
                   animationDelay: item.animationDelay,
-                  transform: `translateY(${scrollY * 0.05 * (index % 3 + 1)}px)` 
+                  animationDuration: `${5 + index % 4}s`
                 }}
               >
                 <item.icon size={item.size} className={item.color} />
               </div>
             ))}
-          </div>
-          
-          <div className="container mx-auto px-6 relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div className="order-2 lg:order-1">
-                <div className="space-y-6 max-w-xl">
-                  <div className="overflow-hidden">
-                    <Badge 
-                      variant="outline" 
-                      className="px-3 py-1 text-sm border-primary/20 bg-primary/5 text-primary animate-fade-up" 
-                      style={{ animationDelay: "0.1s" }}
-                    >
-                      AI-Powered Medical Assistant
-                    </Badge>
-                  </div>
-                  
-                  <div className="overflow-hidden">
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight animate-fade-up" style={{ animationDelay: "0.2s" }}>
-                      Your 
-                      <span className="inline-block ml-2">
-                        <TypewriterEffect 
-                          words={["AI-Powered", "Intelligent", "Advanced"]} 
-                          className="bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-400 dark:from-primary-400 dark:to-primary-600"
-                        />
-                      </span>
-                      <br/>
+          </ParallaxEffect>
+        </div>
+        
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="order-2 lg:order-1">
+              <div className="space-y-6 max-w-2xl">
+                <div className="overflow-hidden">
+                  <Badge 
+                    variant="outline" 
+                    className="px-3 py-1 text-sm border-primary/20 bg-primary/5 text-primary animate-fade-up" 
+                    style={{ animationDelay: "0.1s" }}
+                  >
+                    AI-Powered Medical Assistant
+                  </Badge>
+                </div>
+                
+                <div className="overflow-hidden">
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight animate-fade-up" style={{ animationDelay: "0.2s" }}>
+                    The Future of 
+                    <span className="inline-block ml-2">
+                      <TypewriterEffect 
+                        words={["AI-Powered", "Intelligent", "Medical"]} 
+                        className="bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-400 dark:from-primary-400 dark:to-primary-600"
+                        textGradient={true}
+                        cursorStyle="block"
+                        cursorClassName="bg-primary-500"
+                      />
+                    </span>
+                    <br/>
+                    <span className="relative">
                       <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-400 dark:from-primary-400 dark:to-primary-600">
-                        Medical Assistant
+                        Healthcare Education
                       </span>
-                    </h1>
-                  </div>
-                  
-                  <div className="overflow-hidden">
-                    <p className="text-lg text-gray-600 dark:text-gray-300 animate-fade-up" style={{ animationDelay: "0.3s" }}>
-                      Es3af is an AI-powered chat platform designed for medical students to ask complex medical questions and receive accurate, instant answers.
-                    </p>
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row gap-4 pt-2 overflow-hidden">
-                    <div className="animate-fade-up" style={{ animationDelay: "0.4s" }}>
-                      <Link to="/dashboard">
-                        <AnimatedButton 
-                          size="lg" 
-                          className="w-full sm:w-auto modern-button group shadow-md hover:shadow-primary/20"
-                        >
-                          <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-primary-400 to-primary-600 transition-all duration-300 group-hover:opacity-90"></span>
-                          <span className="relative flex items-center">
-                            Get Started
-                            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                          </span>
-                        </AnimatedButton>
-                      </Link>
-                    </div>
-                    
-                    <div className="animate-fade-up" style={{ animationDelay: "0.5s" }}>
-                      <Link to="/about">
-                        <Button 
-                          variant="outline" 
-                          size="lg" 
-                          className="w-full sm:w-auto group transition-all duration-300 border-primary/30 hover:border-primary hover:bg-primary/5"
-                        >
-                          Learn More
+                      <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 358 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 9C100.667 3.66667 163.667 1 326 3" stroke="url(#paint0_linear)" strokeWidth="5" strokeLinecap="round"/>
+                        <defs>
+                          <linearGradient id="paint0_linear" x1="3" y1="9" x2="336" y2="9" gradientUnits="userSpaceOnUse">
+                            <stop stopColor="hsl(var(--primary-600))"/>
+                            <stop offset="1" stopColor="hsl(var(--primary-400))"/>
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                    </span>
+                  </h1>
+                </div>
+                
+                <div className="overflow-hidden">
+                  <p className="text-lg text-gray-600 dark:text-gray-300 animate-fade-up leading-relaxed" style={{ animationDelay: "0.3s" }}>
+                    Es3af combines cutting-edge AI with comprehensive medical knowledge to provide instant, accurate responses to complex medical queries—helping you excel in your medical education journey.
+                  </p>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-4 pt-2 overflow-hidden">
+                  <div className="animate-fade-up" style={{ animationDelay: "0.4s" }}>
+                    <Link to="/dashboard">
+                      <AnimatedButton 
+                        size="lg" 
+                        className="w-full sm:w-auto shadow-lg hover:shadow-primary/20 group"
+                        animationType="glow"
+                      >
+                        <span className="relative flex items-center">
+                          Get Started
                           <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                        </Button>
-                      </Link>
-                    </div>
+                        </span>
+                      </AnimatedButton>
+                    </Link>
+                  </div>
+                  
+                  <div className="animate-fade-up" style={{ animationDelay: "0.5s" }}>
+                    <Link to="/about">
+                      <Button 
+                        variant="outline" 
+                        size="lg" 
+                        className="w-full sm:w-auto group transition-all duration-300 border-primary/30 hover:border-primary hover:bg-primary/5 backdrop-blur-sm"
+                      >
+                        Learn More
+                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </div>
-              
-              <div className="order-1 lg:order-2 h-[400px] lg:h-[500px] overflow-hidden rounded-3xl glass-card glow-border animate-fade-left relative" style={{ animationDelay: "0.5s" }}>
+            </div>
+            
+            <div className="order-1 lg:order-2 h-[400px] lg:h-[500px] overflow-hidden rounded-3xl animate-fade-left relative" style={{ animationDelay: "0.5s" }}>
+              {/* Modern AI medical visualization */}
+              <div className="absolute inset-0 glass-card glow-border">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent z-10 pointer-events-none"></div>
-                <ThreeJsAmbulance />
+                
+                <div className="relative h-full w-full p-6 flex flex-col">
+                  {/* Brain neural network visualization */}
+                  <div className="flex-1 relative overflow-hidden rounded-xl bg-black/5 dark:bg-white/5 backdrop-blur-sm">
+                    {/* Medical neural network animation */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="relative w-64 h-64">
+                        {/* Brain outline */}
+                        <svg viewBox="0 0 200 200" className="w-full h-full opacity-20">
+                          <path d="M100,20 C140,20 170,50 170,90 C170,130 140,160 100,160 C60,160 30,130 30,90 C30,50 60,20 100,20 Z" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary"/>
+                          <path d="M100,30 C135,30 160,55 160,90 C160,125 135,150 100,150 C65,150 40,125 40,90 C40,55 65,30 100,30 Z" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-primary"/>
+                          <path d="M100,40 C130,40 150,60 150,90 C150,120 130,140 100,140 C70,140 50,120 50,90 C50,60 70,40 100,40 Z" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-primary"/>
+                        </svg>
+                        
+                        {/* Animated nodes */}
+                        {[...Array(20)].map((_, i) => (
+                          <div 
+                            key={i}
+                            className="absolute w-2 h-2 rounded-full bg-primary animate-pulse"
+                            style={{
+                              top: `${20 + Math.random() * 60}%`,
+                              left: `${20 + Math.random() * 60}%`,
+                              animationDelay: `${Math.random() * 3}s`,
+                              opacity: 0.3 + Math.random() * 0.7
+                            }}
+                          />
+                        ))}
+                        
+                        {/* Animated connections */}
+                        <svg className="absolute inset-0 w-full h-full">
+                          {[...Array(30)].map((_, i) => {
+                            const x1 = 20 + Math.random() * 60;
+                            const y1 = 20 + Math.random() * 60;
+                            const x2 = 20 + Math.random() * 60;
+                            const y2 = 20 + Math.random() * 60;
+                            
+                            return (
+                              <path 
+                                key={i}
+                                d={`M${x1},${y1} L${x2},${y2}`}
+                                stroke="currentColor"
+                                strokeWidth="0.5"
+                                className="text-primary/30"
+                                style={{
+                                  animation: `pulse 3s infinite`,
+                                  animationDelay: `${Math.random() * 3}s`
+                                }}
+                              />
+                            );
+                          })}
+                        </svg>
+                          
+                        {/* Central brain icon */}
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-primary">
+                          <BrainCircuit size={64} className="opacity-75 animate-pulse" style={{ animationDuration: '3s' }} />
+                        </div>
+                      </div>
+                    </div>
+                      
+                    {/* Data visualization */}
+                    <div className="absolute bottom-0 left-0 right-0 h-24 flex items-end p-4">
+                      {[...Array(20)].map((_, i) => (
+                        <div 
+                          key={i}
+                          className="w-[3px] mx-[2px] rounded-t-full bg-primary/60"
+                          style={{ 
+                            height: `${10 + Math.sin(i/3) * 50}%`,
+                            animation: 'animate-pulse',
+                            animationDelay: `${i * 0.1}s`
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                    
+                  {/* Simulated medical data */}
+                  <div className="mt-4 grid grid-cols-3 gap-3">
+                    {[...Array(3)].map((_, i) => (
+                      <div 
+                        key={i} 
+                        className="h-14 rounded-lg glass-card flex flex-col justify-center p-3"
+                      >
+                        <div className="h-2 w-1/2 bg-primary/20 rounded-full mb-2"></div>
+                        <div className="h-2 w-3/4 bg-primary/10 rounded-full"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </section>
-      </ParallaxEffect>
+        </div>
+      </section>
       
       {/* Interactive Chat Demo Section */}
       <section className="py-16 lg:py-20 relative overflow-hidden">
