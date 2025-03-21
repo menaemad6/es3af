@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Brain, BrainCircuit, Microscope, MessageSquare, LightbulbIcon, HeartPulse, ShieldPlus, ActivitySquare, Dna, TestTube, Sparkles } from "lucide-react";
@@ -594,3 +595,99 @@ const Index = () => {
       {/* Features Section with scroll-triggered animations */}
       <section className="py-16 lg:py-24 relative overflow-hidden">
         <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-background via-background/90 to-primary/5"></div>
+          <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-background/80 to-transparent"></div>
+        </div>
+        
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 animate-on-scroll fade-up">
+              Powered by <span className="text-primary">Advanced AI Technology</span>
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto animate-on-scroll fade-up">
+              Es3af leverages the latest advancements in artificial intelligence to help medical students excel in their education.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="animate-on-scroll fade-up glass-card group h-full" style={{ animationDelay: `${index * 0.1}s` }}>
+                <CardContent className="p-6 h-full flex flex-col">
+                  <div className="p-2 rounded-xl bg-primary/10 w-fit mb-4 transition-all duration-300 group-hover:bg-primary/20">
+                    <feature.icon size={28} className="text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-300 flex-1">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+      
+      {/* CTA Section */}
+      <section className="py-16 lg:py-24 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-background"></div>
+          
+          {/* Background effect */}
+          <div className="absolute inset-0">
+            <svg className="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="cta-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-primary/20" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#cta-grid)" />
+            </svg>
+          </div>
+          
+          {/* Glow effect */}
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px] opacity-70"></div>
+        </div>
+        
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 animate-on-scroll fade-up">
+              Ready to Transform Your <span className="text-primary">Medical Education</span>?
+            </h2>
+            
+            <p className="text-lg text-gray-600 dark:text-gray-300 mb-10 animate-on-scroll fade-up">
+              Join thousands of medical students who are enhancing their learning experience with Es3af's AI-powered assistance.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-on-scroll fade-up">
+              <Link to="/dashboard">
+                <AnimatedButton 
+                  size="lg" 
+                  className="w-full sm:w-auto shadow-lg hover:shadow-primary/20 group"
+                  animationType="glow"
+                >
+                  <span className="relative flex items-center">
+                    Get Started Now
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </span>
+                </AnimatedButton>
+              </Link>
+              
+              <Link to="/about">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="w-full sm:w-auto group transition-all duration-300 border-primary/30 hover:border-primary hover:bg-primary/5"
+                >
+                  Learn More
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <Footer />
+    </div>
+  );
+};
+
+export default Index;
