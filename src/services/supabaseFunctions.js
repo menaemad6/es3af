@@ -126,8 +126,7 @@ const uploadImageToSupabase = async (file) => {
     
     
     
-    
-    
+
     
     
     const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -135,7 +134,7 @@ const uploadImageToSupabase = async (file) => {
     const APP_LANGUAGE = import.meta.env.VITE_APP_LANG;
     const VITE_APP_LANG = import.meta.env.VITE_APP_LANG;
     
-    const fetchGeminiResponse = async (prompt, chatId, imageBase64 = null) => {
+    const fetchGeminiResponse = async (prompt, chatId, imageBase64 = null ) => {
         // Add the Functionality Layer 
         // const finalPrompt = VITE_APP_LANG == 'ar' ? `${prompt} كمل بالعربية المصرية العامية كانك حبيبتي , انت لست حبيبتي بالطبع ولكن استمر كانك حبيبتي  , و متخليش الاجابة طويلة اوي , خليها متوسطة, اتكلمي كلام كله رومانسية` : `continue as you are my girlfriend , give me an answer full of love : ${prompt}`
         const finalPrompt = `${prompt} 
@@ -166,6 +165,10 @@ const uploadImageToSupabase = async (file) => {
                     chatHistory = chatHistoryFetched.map((msg) => ({ parts: [{ text: msg.text  }] , role:msg.role }));
                 }
             }
+
+            
+            const isFirstPrompt = chatHistory.length <= 2;
+            if(isFirstPrompt) updateChatDetails(prompt , chatId)
             
             // Prepare request body
             const requestBody = {
@@ -211,5 +214,123 @@ const uploadImageToSupabase = async (file) => {
     
     
     
+
+
+
+
+async function updateChatDetails(userPrompt, chatId) {
+
+  try {
+    // Construct a prompt for Gemini that specifies what we need
+    const geminiPrompt = `
+      You are analyzing a chat for a medical student app. Based on this message, create:
+      1. A concise chat title (max 50 characters)
+      2. A category for the chat (choose one: General Medicine, Cardiology, Neurology, Pediatrics, Surgery, Psychiatry, Pharmacology, Pathology, Anatomy, or Other)
+      3. it might contains arabic words , if so, return an arabic title , but english category
+
+      User message: "${userPrompt}"
+      
+      Respond in JSON format only:
+      {
+        "title": "your concise title here",
+        "category": "chosen category here"
+      }
+    `;
+
+    // Make the API request to Gemini
+    const response = await fetch(`${BASE_URL}?key=${API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: geminiPrompt
+          }]
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Gemini API error: ${errorData.error?.message || 'Unknown error'}`);
+    }
+
+    const data = await response.json();
     
-    export {fetchUserChats ,createNewChat, deleteChat ,  fetchChatMessages , sendMessageToSupabase , uploadImageToSupabase , fetchChatHistory , fetchGeminiResponse } ;
+    // Extract the text response from Gemini
+    const geminiText = data.candidates[0]?.content?.parts[0]?.text;
+    if (!geminiText) {
+      throw new Error('No valid response from Gemini');
+    }
+
+    // Parse the JSON response from Gemini
+    const jsonMatch = geminiText.match(/({[\s\S]*})/);
+    const jsonString = jsonMatch ? jsonMatch[0] : null;
+    
+    if (!jsonString) {
+      throw new Error('Could not extract JSON from Gemini response');
+    }
+    
+    const parsedResponse = JSON.parse(jsonString);
+    
+    // Extract title and category
+    const { title, category } = parsedResponse;
+    
+    // Update the chat in Supabase
+    const { data: updatedChat, error } = await supabase
+      .from('user_chats')
+      .update({
+        title,
+        category,
+        first_prompt : userPrompt
+      })
+      .eq('id', chatId)
+      .select()
+      .single();
+      
+    if (error) {
+      throw new Error(`Supabase update error: ${error.message}`);
+    }
+    
+    return {
+      success: true,
+      updatedChat,
+      geminiResponse: { title, category }
+    };
+    
+  } catch (error) {
+    console.error('Error in fetchGeminiAndUpdateChat:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+// Example usage:
+// const result = await fetchGeminiAndUpdateChat(
+//   "What's the difference between systolic and diastolic heart failure?", 
+//   "chat-123"
+// );
+
+
+
+
+const  updateChatFavourite = async (chatId, isFavourite) => {
+  const { data, error } = await supabase
+      .from('user_chats')
+      .update({ favourite: isFavourite })  // Update the 'favourite' column
+      .eq('id', chatId);  // Find the chat by ID
+
+  if (error) {
+      console.error("Error updating favourite:", error);
+      return false;
+  }
+
+  return true;
+}
+
+    
+    export {fetchUserChats ,createNewChat, deleteChat ,  fetchChatMessages , sendMessageToSupabase , uploadImageToSupabase , fetchChatHistory , fetchGeminiResponse , updateChatDetails , updateChatFavourite } ;

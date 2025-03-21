@@ -25,6 +25,9 @@ import { useUserChats } from "@/hooks/useUserChats"
 import { useDeleteChat } from "@/hooks/useDeleteChat"
 import { useCreateChat } from "@/hooks/useCreateChat"
 
+import {calculateTimeAgo , addHours} from "@/services/helpers.js"
+import { Skeleton } from "@/components/ui/skeleton";
+
 const APP_LANG = import.meta.env.VITE_APP_LANG;
 
 interface RecentChat {
@@ -123,15 +126,19 @@ const Dashboard = () => {
   const { mutate: createChat, isPending: isCreatingChat } = useCreateChat();
 
 
-  const handleCreateChat = (e) => {
+  const handleCreateChat = (e , title) => {
     e.preventDefault();
-    createChat({ userId, title: `${APP_LANG === 'en' ?  "New Chat" : "محادثة جيدة"}${userChats ? " #" + (userChats.length + 1) : ''}` });
+    if(title === "new-chat") {
+      createChat({ userId, title: `${APP_LANG === 'en' ?  "New Chat" : "محادثة جيدة"}${userChats ? " #" + (userChats.length + 1) : ''}` });
+    } else{
+      createChat({ userId, title });
+    }
 
   }
 
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background to-gray-50/80 dark:from-background dark:to-gray-900/30">
       <Header />
       
       <div className="flex-1 flex pt-16">
@@ -168,8 +175,17 @@ const Dashboard = () => {
               </Button>
             )}
             
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2">Welcome to Es3af</h1>
+            <div className="mb-8 animate-fade-up">
+              <h1 className="text-3xl font-bold mb-2 flex items-center">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-700 to-primary-500 dark:from-primary-400 dark:to-primary-600">
+                  Welcome to Es3af
+                </span>
+                <span className="inline-block ml-3 relative top-1">
+                  <Badge variant="outline" className="bg-primary/5 border-primary/20 text-primary">
+                    AI-Powered
+                  </Badge>
+                </span>
+              </h1>
               <p className="text-gray-600 dark:text-gray-300">
                 Your AI-powered medical assistant. Ask any medical question to get started.
               </p>
@@ -177,19 +193,21 @@ const Dashboard = () => {
             
             {/* Search Bar */}
             <div className="relative max-w-2xl mb-8">
+              <form onSubmit={(e) => handleCreateChat(e , searchQuery)}>
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
                 type="text"
-                placeholder="Search medical topics, questions, or previous conversations..."
+                placeholder="Search medical topics, questions..."
                 className="pl-10 pr-4 py-6 text-base rounded-xl"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-              />
+                />
+                </form>
             </div>
             
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              <Link onClick={(e) => handleCreateChat(e) } to="/" >
+              <Link onClick={(e) => handleCreateChat(e , "new-chat") } to="/" >
                 <Card className="hover:shadow-md transition-shadow hover:border-primary/20">
                   <CardContent className="p-6 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -230,41 +248,65 @@ const Dashboard = () => {
               </TabsList>
               
               <TabsContent value="recent" className="space-y-4">
-                {recentChats.length > 0 ? (
-                  recentChats.map((chat) => (
+              {isLoadingUserChats  ? (
+                  // Skeleton loading for topics
+                  <div className="grid grid-cols-1 gap-4">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <Card key={index} className="futuristic-card overflow-hidden border-0 h-full">
+                        <CardContent className="p-6 flex items-start gap-4 h-full">
+                          <div className="w-full">
+                            <Skeleton className="h-5 w-3/5 mb-2" />
+                            <Skeleton className="h-4 w-full mt-3" />
+                            <Skeleton className="h-4 w-4/5 mt-2" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) :
+
+              userChats?.length > 0 ? (
+                  userChats?.map((chat) => (
                     <Link to={`/chat/${chat.id}`} key={chat.id}>
                       <Card className="hover:shadow-md transition-shadow">
                         <CardContent className="p-6">
                           <div className="flex justify-between items-start mb-2">
                             <div>
                               <h3 className="font-semibold text-lg">{chat.title}</h3>
-                              <Badge variant="outline" className="mt-1">
+                              {chat?.category &&                              
+                               <Badge variant="outline" className="mt-1">
                                 {chat.category}
                               </Badge>
+                              }
+
                             </div>
-                            <span className="text-xs text-gray-500">{chat.timestamp}</span>
+                            <span className="text-xs text-gray-500">{calculateTimeAgo(addHours(chat.created_at , 2))}</span>
                           </div>
+                          {chat.first_prompt && 
                           <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2">
-                            {chat.preview}
+                            {chat.first_prompt}
                           </p>
+                          }
                         </CardContent>
                       </Card>
                     </Link>
                   ))
-                ) : (
+                ) : !isLoadingUserChats && (!userChats?.length) && (
                   <div className="text-center py-12">
                     <p className="text-gray-500 dark:text-gray-400">No recent chats yet</p>
-                    <Link to="/chat/new">
+                    <Link to="/chat/new" onClick={(e) => handleCreateChat(e , "new-chat")}>
                       <Button className="mt-4">Start a New Chat</Button>
                     </Link>
                   </div>
-                )}
+                )
+              }
+
               </TabsContent>
               
               <TabsContent value="topics" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {suggestedTopics.map((topic, index) => (
-                    <Link to={`/chat/topic/${topic.title.toLowerCase().replace(/\s+/g, '-')}`} key={index}>
+                    <Link to={`/chat/topic/${topic.title.toLowerCase().replace(/\s+/g, '-')}`} key={index} onClick={(e) => handleCreateChat(e , topic.description)}>
                       <Card className="hover:shadow-md transition-shadow h-full">
                         <CardContent className="p-6 flex items-start gap-4 h-full">
                           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -282,19 +324,83 @@ const Dashboard = () => {
                   ))}
                 </div>
               </TabsContent>
+
               
-              <TabsContent value="favorites">
-                <div className="text-center py-12">
+
+               
+
+
+              <TabsContent value="favorites" className="space-y-4">
+              {isLoadingUserChats  ? (
+                  // Skeleton loading for topics
+                  <div className="grid grid-cols-1 gap-4">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <Card key={index} className="futuristic-card overflow-hidden border-0 h-full">
+                        <CardContent className="p-6 flex items-start gap-4 h-full">
+                          <div className="w-full">
+                            <Skeleton className="h-5 w-3/5 mb-2" />
+                            <Skeleton className="h-4 w-full mt-3" />
+                            <Skeleton className="h-4 w-4/5 mt-2" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) :
+
+              (userChats?.length > 0 ) && (userChats?.filter(chat=>chat.favourite).length > 0 ) ? (
+
+
+                  userChats?.filter(chat=>chat.favourite).map((chat) => (
+                    <Link to={`/chat/${chat.id}`} key={chat.id}>
+                      <Card className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-6">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-semibold text-lg">{chat.title}</h3>
+                              {chat?.category &&                              
+                               <Badge variant="outline" className="mt-1">
+                                {chat.category}
+                              </Badge>
+                              }
+
+                            </div>
+                            <span className="text-xs text-gray-500">{calculateTimeAgo(addHours(chat.created_at , 2))}</span>
+                          </div>
+                          {chat.first_prompt && 
+                          <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2">
+                            {chat.first_prompt}
+                          </p>
+                          }
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))
+
+
+
+                ) : !isLoadingUserChats && (
+
+                  <div className="text-center py-12">
                   <Heart className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">No Favorite Chats Yet</h3>
                   <p className="text-gray-500 dark:text-gray-400 mb-4">
                     Mark conversations as favorites by clicking the heart icon in a chat.
                   </p>
-                  <Link to="/chat/new">
-                    <Button>Start a New Chat</Button>
-                  </Link>
+                  <Link to="/chat/new" onClick={(e) => handleCreateChat(e , "new-chat")}>
+                      <Button className="mt-4">Start a New Chat</Button>
+                    </Link>
                 </div>
+
+                )
+              }
+
               </TabsContent>
+
+
+
+
+              
             </Tabs>
           </div>
         </main>

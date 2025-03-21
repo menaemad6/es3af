@@ -21,7 +21,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ChatMessage from "@/components/ui-custom/ChatMessage";
 import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Header";
+import Header from "@/components/layout/Header"
 
 import { useUser } from "@clerk/clerk-react";
 
@@ -30,12 +30,16 @@ import { useUserChats } from "@/hooks/useUserChats"
 import { useDeleteChat } from "@/hooks/useDeleteChat"
 import { useSendMessage } from "@/hooks/useSendMessage"
 import { useGemini } from "@/hooks/useGemini"
+import { useAddChatFavourite } from "@/hooks/useAddChatFavourite"
 
-import {uploadImageToSupabase} from "@/services/supabaseFunctions.js"
+
+
+import {uploadImageToSupabase } from "@/services/supabaseFunctions.js"
 import LoadingSpinner from "@/components/ui/LoadingSpinner"
 import { toast } from "sonner";
 
 import ImageUpload from "@/components/ui-custom/imageUpload"
+
 // Sample conversation data
 // const sampleConversation = [
 //   {
@@ -275,9 +279,10 @@ const Chat = () => {
   //   ]);
   // };
   
+  const { mutate: addChatFavourite, isPending: isAddingChatFavourite } = useAddChatFavourite();
 
-  const handleAddToFavorites = () => {
-    setFavorite(true);
+  const handleAddToFavorites = async () => {
+    addChatFavourite({chatId , userId:user?.id , isFavourite:!(chatDetails?.at(0)?.favourite)})
   }
 
 
@@ -325,9 +330,8 @@ const Chat = () => {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={handleAddToFavorites}>
-                      {favorite ? <HeartPulse className="h-5 w-5" /> : <Heart className="h-5 w-5" />}
-                      
+                    <Button variant="ghost" size="icon" onClick={handleAddToFavorites} disabled={isLoadingChat || isAddingChatFavourite}>
+                      { isLoadingChat || isAddingChatFavourite ? <LoadingSpinner width={15} height={15} /> : chatDetails?.at(0)?.favourite ? <Heart className="h-5 w-5" fill="white" stroke="white" /> : <Heart className="h-5 w-5"  />}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Add to favorites</TooltipContent>

@@ -37,7 +37,7 @@ const useGemini = () => {
 
 
   return useMutation({
-    mutationFn: ({prompt , imageBase64 , chatId  }) => fetchGeminiResponse(prompt , chatId , imageBase64),
+    mutationFn: ({prompt , imageBase64 , chatId  }) => fetchGeminiResponse(prompt , chatId , imageBase64 ),
     onSuccess: (dataFromFetch, variables) => {
         queryClient.invalidateQueries(["geminiResponse" , Math.random()]);
 
