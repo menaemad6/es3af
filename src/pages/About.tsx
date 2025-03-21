@@ -1,13 +1,16 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Book, Heart, Users, Code, Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Brain, Book, Heart, Users, Code, Shield, ArrowRight, ArrowLeft, Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const About = () => {
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
   
   // Intersection Observer setup for scroll animations
   useEffect(() => {
@@ -16,7 +19,6 @@ const About = () => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add("active");
-            observerRef.current?.unobserve(entry.target);
           }
         });
       },
@@ -76,23 +78,57 @@ const About = () => {
   const timeline = [
     {
       year: "2023",
+      quarter: "Q1",
       title: "Concept Development",
       description: "The idea for Es3af was born from recognizing the need for accessible medical information for students.",
     },
     {
       year: "2023",
+      quarter: "Q2",
       title: "Research Phase",
       description: "Extensive research into medical education needs and AI capabilities to ensure a valuable tool.",
     },
     {
+      year: "2023",
+      quarter: "Q4",
+      title: "Beta Development",
+      description: "Building and refining our AI model with medical experts to ensure accuracy and relevance.",
+    },
+    {
       year: "2024",
+      quarter: "Q1",
       title: "Beta Launch",
       description: "Initial release to select medical schools for testing and feedback gathering.",
     },
     {
       year: "2024",
+      quarter: "Q2",
       title: "Public Release",
       description: "Es3af becomes available to medical students worldwide, beginning its mission to enhance medical education.",
+    },
+  ];
+  
+  const testimonials = [
+    {
+      name: "Sarah Johnson",
+      role: "4th Year Medical Student",
+      image: "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80",
+      quote: "Es3af has revolutionized how I study for exams. The ability to get instant, accurate answers to complex questions has saved me countless hours of research.",
+      rating: 5,
+    },
+    {
+      name: "Michael Chen",
+      role: "Neurology Resident",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80",
+      quote: "Even as a resident, I find Es3af incredibly useful for quickly reviewing concepts and staying up-to-date with the latest medical knowledge.",
+      rating: 5,
+    },
+    {
+      name: "Aisha Patel",
+      role: "2nd Year Medical Student",
+      image: "https://images.unsplash.com/photo-1551836022-aadb801c60e9?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80",
+      quote: "As a visual learner, I appreciate how Es3af explains complex medical concepts clearly and comprehensively. It's like having a tutor available 24/7.",
+      rating: 4,
     },
   ];
   
@@ -100,16 +136,21 @@ const About = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       
-      {/* Hero Section */}
+      {/* Hero Section with moving background */}
       <section className="pt-32 pb-16 relative overflow-hidden">
-        <div className="container mx-auto px-6">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-background"></div>
+        <div className="absolute w-full h-full bg-grid-pattern opacity-[0.03] dark:opacity-[0.05]"></div>
+        <div className="absolute top-0 -right-40 w-80 h-80 bg-blue-300/10 dark:bg-blue-400/10 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute bottom-0 left-20 w-40 h-40 bg-green-300/10 dark:bg-green-400/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: "1.5s" }}></div>
+        
+        <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <Badge variant="outline" className="mb-4 animate-fade-up" style={{ animationDelay: "0.1s" }}>
               Our Story
             </Badge>
             
             <h1 className="text-4xl md:text-5xl font-bold mb-6 animate-fade-up" style={{ animationDelay: "0.2s" }}>
-              About Es3af
+              About <span className="text-primary">Es3af</span>
             </h1>
             
             <p className="text-xl text-gray-600 dark:text-gray-300 animate-fade-up" style={{ animationDelay: "0.3s" }}>
@@ -117,15 +158,11 @@ const About = () => {
             </p>
           </div>
         </div>
-        
-        {/* Decorative elements */}
-        <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10" />
       </section>
       
-      {/* Mission Section */}
-      <section className="py-16 bg-gray-50 dark:bg-gray-900/50">
-        <div className="container mx-auto px-6">
+      {/* Mission Section with animated elements */}
+      <section className="py-16 bg-gray-50 dark:bg-gray-900/50 relative overflow-hidden">
+        <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
               <div>
@@ -139,7 +176,11 @@ const About = () => {
                 </p>
               </div>
               
-              <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-subtle animate-on-scroll fade-left">
+              <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-subtle animate-on-scroll fade-left border border-gray-100 dark:border-gray-700 relative group">
+                <div className="absolute -top-3 -left-3 w-6 h-6 bg-primary/20 rounded-md"></div>
+                <div className="absolute -bottom-3 -right-3 w-6 h-6 bg-primary/20 rounded-md"></div>
+                <div className="absolute top-4 right-4 w-12 h-12 bg-primary/10 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 transform scale-0 group-hover:scale-100"></div>
+                
                 <h3 className="text-xl font-semibold mb-4">Why "Es3af"?</h3>
                 <p className="text-gray-600 dark:text-gray-300 mb-4">
                   The name "Es3af" means "Ambulance" in Arabic, symbolizing our commitment to providing rapid, reliable assistance when medical students need it most.
@@ -153,9 +194,9 @@ const About = () => {
         </div>
       </section>
       
-      {/* Values Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-6">
+      {/* Values Section with hover effects */}
+      <section className="py-16 relative overflow-hidden">
+        <div className="container mx-auto px-6 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <Badge variant="outline" className="mb-4 animate-on-scroll fade-up">
               What We Stand For
@@ -172,22 +213,27 @@ const About = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {values.map((value, index) => (
-              <Card key={index} className="border-none shadow-subtle animate-on-scroll fade-up" style={{ animationDelay: `${0.1 * index}s` }}>
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <Card 
+                key={index} 
+                className="border-none shadow-subtle hover:shadow-md transition-all duration-300 hover:-translate-y-1 overflow-hidden animate-on-scroll fade-up group" 
+                style={{ animationDelay: `${0.1 * index}s` }}
+              >
+                <CardContent className="p-6 relative z-10">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 transform group-hover:scale-110 transition-transform duration-300">
                     <value.icon className="h-6 w-6 text-primary" />
                   </div>
                   
-                  <h3 className="text-xl font-semibold mb-2">{value.title}</h3>
+                  <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors duration-300">{value.title}</h3>
                   <p className="text-gray-600 dark:text-gray-300">{value.description}</p>
                 </CardContent>
+                <div className="absolute -right-12 -bottom-12 w-24 h-24 bg-primary/5 rounded-full transform scale-0 group-hover:scale-150 transition-all duration-500"></div>
               </Card>
             ))}
           </div>
         </div>
       </section>
       
-      {/* Timeline Section */}
+      {/* Timeline Section with animated progress */}
       <section className="py-16 bg-gray-50 dark:bg-gray-900/50">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -204,21 +250,42 @@ const About = () => {
             </p>
           </div>
           
-          <div className="max-w-3xl mx-auto">
-            <div className="relative border-l border-gray-200 dark:border-gray-700 ml-6">
+          <div className="max-w-4xl mx-auto relative">
+            {/* Vertical line */}
+            <div className="absolute left-[15px] md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/40 via-primary to-primary/40 ml-px md:-ml-px"></div>
+            
+            <div className="space-y-12">
               {timeline.map((item, index) => (
                 <div 
                   key={index} 
-                  className="mb-12 ml-8 animate-on-scroll fade-left"
+                  className={cn(
+                    "relative flex flex-col md:flex-row md:items-center animate-on-scroll",
+                    index % 2 === 0 ? "md:flex-row-reverse text-left md:text-right fade-left" : "fade-right"
+                  )}
                   style={{ animationDelay: `${0.1 * index}s` }}
                 >
-                  <div className="absolute w-6 h-6 bg-primary rounded-full -left-3 border-4 border-white dark:border-gray-900"></div>
-                  <div className="absolute -left-16 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-primary font-bold">{item.year}</span>
+                  {/* Center dot */}
+                  <div className="absolute left-[15px] md:left-1/2 top-0 w-8 h-8 bg-primary rounded-full transform -translate-x-1/2 shadow-lg border-4 border-white dark:border-gray-900 z-10"></div>
+                  
+                  {/* Date card */}
+                  <div className={cn(
+                    "w-full md:w-[45%] pb-8 md:pb-0",
+                    index % 2 === 0 ? "md:pl-12" : "md:pr-12 order-2 md:order-none"
+                  )}>
+                    <div className="ml-12 md:ml-0 bg-primary text-white px-4 py-2 rounded-lg inline-block shadow-subtle">
+                      <div className="font-bold">{item.year} {item.quarter}</div>
+                    </div>
                   </div>
-                  <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-subtle">
-                    <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                    <p className="text-gray-600 dark:text-gray-300">{item.description}</p>
+                  
+                  {/* Content card */}
+                  <div className={cn(
+                    "w-full md:w-[45%]",
+                    index % 2 === 0 ? "md:pr-12 order-1 md:order-none" : "md:pl-12"
+                  )}>
+                    <div className="ml-12 md:ml-0 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-subtle border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+                      <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
+                      <p className="text-gray-600 dark:text-gray-300">{item.description}</p>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -227,11 +294,105 @@ const About = () => {
         </div>
       </section>
       
-      {/* Team Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-6">
+      {/* Testimonials Section with carousel */}
+      <section className="py-16 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"></div>
+        <div className="absolute w-full h-full bg-grid-pattern opacity-[0.03] dark:opacity-[0.05]"></div>
+        
+        <div className="container mx-auto px-6 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <Badge variant="outline" className="mb-4 animate-on-scroll fade-up">
+              User Experiences
+            </Badge>
+            
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 animate-on-scroll fade-up">
+              What Students Say
+            </h2>
+            
+            <p className="text-gray-600 dark:text-gray-300 animate-on-scroll fade-up">
+              Hear from medical students about how Es3af is transforming their learning experience.
+            </p>
+          </div>
+          
+          <div className="max-w-4xl mx-auto relative">
+            <div className="overflow-hidden rounded-2xl bg-white dark:bg-gray-800 shadow-subtle">
+              <div className="flex transition-all duration-500" style={{ transform: `translateX(-${activeTestimonial * 100}%)` }}>
+                {testimonials.map((testimonial, index) => (
+                  <div key={index} className="w-full flex-shrink-0 p-8">
+                    <div className="flex flex-col md:flex-row gap-8 items-center">
+                      <div className="md:w-1/3 flex-shrink-0">
+                        <div className="w-24 h-24 md:w-32 md:h-32 mx-auto rounded-full overflow-hidden border-4 border-primary/10">
+                          <img src={testimonial.image} alt={testimonial.name} className="w-full h-full object-cover" />
+                        </div>
+                      </div>
+                      
+                      <div className="md:w-2/3 text-center md:text-left">
+                        <div className="flex justify-center md:justify-start mb-2">
+                          {[...Array(5)].map((_, i) => (
+                            <Star 
+                              key={i} 
+                              className={cn(
+                                "w-5 h-5", 
+                                i < testimonial.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                              )} 
+                            />
+                          ))}
+                        </div>
+                        
+                        <blockquote className="text-lg italic mb-4">"{testimonial.quote}"</blockquote>
+                        <p className="font-semibold">{testimonial.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{testimonial.role}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex justify-between items-center p-4 border-t border-gray-100 dark:border-gray-700">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={() => setActiveTestimonial(prev => (prev > 0 ? prev - 1 : testimonials.length - 1))}
+                  className="rounded-full"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+                
+                <div className="flex gap-2">
+                  {testimonials.map((_, index) => (
+                    <button
+                      key={index}
+                      className={cn(
+                        "w-2.5 h-2.5 rounded-full transition-all duration-300",
+                        activeTestimonial === index ? "bg-primary w-6" : "bg-gray-300 dark:bg-gray-600"
+                      )}
+                      onClick={() => setActiveTestimonial(index)}
+                      aria-label={`Go to testimonial ${index + 1}`}
+                    />
+                  ))}
+                </div>
+                
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => setActiveTestimonial(prev => (prev < testimonials.length - 1 ? prev + 1 : 0))}
+                  className="rounded-full"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Team Section */}
+      <section className="py-16 bg-gradient-to-br from-primary-600 to-primary-400 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+        
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <Badge variant="secondary" className="mb-4 animate-on-scroll fade-up">
               Behind Es3af
             </Badge>
             
@@ -239,18 +400,18 @@ const About = () => {
               Our Team
             </h2>
             
-            <p className="text-gray-600 dark:text-gray-300 animate-on-scroll fade-up">
+            <p className="opacity-90 animate-on-scroll fade-up">
               Es3af is developed by a dedicated team of medical professionals, AI specialists, and education experts committed to advancing medical education.
             </p>
           </div>
           
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-subtle max-w-3xl mx-auto animate-on-scroll fade-up">
+          <div className="bg-white/10 backdrop-blur-sm p-8 rounded-2xl border border-white/20 max-w-3xl mx-auto animate-on-scroll fade-up hover:bg-white/20 transition-all duration-300">
             <h3 className="text-xl font-semibold mb-4">Join Our Team</h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
+            <p className="mb-4">
               We're always looking for talented individuals who share our passion for medical education and technological innovation. If you're interested in contributing to Es3af's mission, we'd love to hear from you.
             </p>
-            <p className="text-gray-600 dark:text-gray-300">
-              Contact us at <a href="mailto:careers@es3af.com" className="text-primary hover:underline">careers@es3af.com</a> to learn about current opportunities.
+            <p>
+              Contact us at <a href="mailto:careers@es3af.com" className="text-white underline hover:text-white/80 transition-colors">careers@es3af.com</a> to learn about current opportunities.
             </p>
           </div>
         </div>

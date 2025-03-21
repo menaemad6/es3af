@@ -34,7 +34,7 @@ const Header = () => {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
         isScrolled || isMenuOpen
-          ? "py-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg shadow-sm"
+          ? "py-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg shadow-sm"
           : "py-5 bg-background/80 dark:bg-background/80 backdrop-blur-md"
       }`}
     >
@@ -43,7 +43,7 @@ const Header = () => {
           to="/"
           className="flex items-center gap-2 font-semibold text-xl md:text-2xl"
         >
-          <div className="w-8 h-8 md:w-10 md:h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
+          <div className="w-8 h-8 md:w-10 md:h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
             E
           </div>
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-700 to-primary-500 dark:from-primary-400 dark:to-primary-600">
@@ -57,10 +57,12 @@ const Header = () => {
             <Link
               key={link.path}
               to={link.path}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
+              className={`text-sm font-medium transition-all duration-300 relative hover:text-primary ${
                 location.pathname === link.path
                   ? "text-primary"
                   : "text-foreground/80"
+              } after:absolute after:w-full after:transform after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left ${
+                location.pathname === link.path ? "after:scale-x-100" : ""
               }`}
             >
               {link.name}
@@ -74,7 +76,7 @@ const Header = () => {
             size="icon"
             onClick={toggleTheme}
             aria-label="Toggle theme"
-            className="rounded-full"
+            className="rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             {isDarkMode ? (
               <Sun className="h-5 w-5" />
@@ -83,12 +85,19 @@ const Header = () => {
             )}
           </Button>
           <Link to="/login">
-            <Button variant="outline" className="rounded-full">
+            <Button 
+              variant="outline" 
+              className="rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 hover:border-primary/50"
+            >
               Login
             </Button>
           </Link>
           <Link to="/dashboard">
-            <Button className="rounded-full">Get Started</Button>
+            <Button 
+              className="rounded-full shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5"
+            >
+              Get Started
+            </Button>
           </Link>
         </div>
 
@@ -112,7 +121,7 @@ const Header = () => {
             size="icon"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
-            className="rounded-full"
+            className="rounded-full relative z-50"
           >
             {isMenuOpen ? (
               <X className="h-4 w-4" />
@@ -123,11 +132,11 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu with animations */}
       {isMenuOpen && (
-        <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-40 pt-16 px-4 md:hidden">
-          <nav className="flex flex-col items-center gap-6 py-6">
-            {navLinks.map((link) => (
+        <div className="fixed inset-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md z-40 pt-20 px-4 md:hidden">
+          <nav className="flex flex-col items-center gap-6 py-6 animate-fade-up">
+            {navLinks.map((link, index) => (
               <Link
                 key={link.path}
                 to={link.path}
@@ -137,18 +146,28 @@ const Header = () => {
                     : "text-foreground/80"
                 }`}
                 onClick={() => setIsMenuOpen(false)}
+                style={{ animationDelay: `${0.05 * (index + 1)}s` }}
               >
                 {link.name}
               </Link>
             ))}
             <div className="flex flex-col w-full gap-4 mt-4">
               <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                <Button variant="outline" className="w-full rounded-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full rounded-full animate-fade-up"
+                  style={{ animationDelay: "0.2s" }}
+                >
                   Login
                 </Button>
               </Link>
               <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
-                <Button className="w-full rounded-full">Get Started</Button>
+                <Button 
+                  className="w-full rounded-full animate-fade-up"
+                  style={{ animationDelay: "0.25s" }}
+                >
+                  Get Started
+                </Button>
               </Link>
             </div>
           </nav>
