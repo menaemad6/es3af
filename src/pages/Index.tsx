@@ -33,7 +33,7 @@ useEffect(() => {
       // Increase particle generation probability (reduced threshold from 0.3 to 0.1)
       if (Math.random() > 0.1) {
         // Generate 10-20 particles instead of 3-5
-        const particleCount = Math.floor(Math.random() * 10) + 10;
+        const particleCount = Math.floor(Math.random() * 1) + 1;
         
         for (let i = 0; i < particleCount; i++) {
           const particle = document.createElement('div');
