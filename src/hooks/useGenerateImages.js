@@ -13,9 +13,9 @@ const useGenerateImages = () => {
   return useMutation({
     mutationFn: ({userId , content , imagesCount , id }) =>  generateAndUploadImages(content , imagesCount , id),
 
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries(["user_chats", variables.userId]);
-      toast.success(`${variables.imagesCount} Images generated successfully.`, {
+      toast.success(`${data.length} Images generated successfully.`, {
         duration: 4000, // Duration in milliseconds (optional)
         position: "top-center", // Position of the toast (optional)
       });

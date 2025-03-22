@@ -372,6 +372,7 @@ const generateAndUploadImages = async (prompt , imagesCount , messageId) => {
     // Fetch Gemini to get the correct prompt about the topic 
     const {responseMsg:finalPrompt} = await fetchGeminiResponse(null , null , null , generatePromptForGenerating(imagesCount,prompt))
 
+
     // 🔥 Step 1: Request Gemini API to generate images
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${API_KEY}`, {
       method: "POST",
