@@ -42,8 +42,8 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
-              <Route path="/login/" element={<Login />} />
-              <Route path="/signup/" element={<Signup />} />
+              <Route path="/login/*" element={<Login />} />
+              <Route path="/signup/*" element={<Signup />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/chat/:chatId" element={<Chat />} />
               <Route path="*" element={<NotFound />} />
