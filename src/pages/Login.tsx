@@ -8,7 +8,6 @@ const Login = () => {
   const { userId, isLoaded } = useAuth();
   const navigate = useNavigate();
 
-  console.log(userId , isLoaded)
   useEffect(() => {
     if (isLoaded && userId){
       navigate("/dashboard")
@@ -47,11 +46,10 @@ const Login = () => {
 
           
         <div className="h-full w-full flex items-center justify-center">
-      <SignIn
+        <SignIn
         path="/login"
         signUpUrl="/signup"
         forceRedirectUrl="/dashboard"
-
       />
     </div>
 

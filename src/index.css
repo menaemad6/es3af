@@ -206,3 +206,23 @@ html, body, #root {
   @apply max-w-none p-0 m-0;
   text-align: initial;
 }
+
+
+
+/* Not Found Page Styles  */
+
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+/* You might already have a hover-float class defined in your existing CSS */
+/* Add this to your existing CSS file */
+
+/* This is for the floating icons animation */
+.animate-float {
+  animation-name: float;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}

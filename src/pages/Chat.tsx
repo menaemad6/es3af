@@ -391,14 +391,17 @@ const Chat = () => {
               {chat?.map((message) => (
                 <ChatMessage
                   key={message.id}
+                  id={message.id}
                   content={message.text}
                   isUser={message.role === "user"}
+                  userId = {user?.id || "1"}
                   timestamp={new Date(message.created_at).toLocaleTimeString("en-US", {
                     hour: "numeric",
                     minute: "2-digit",
                     hour12: true,
                   })}
-                  imageSrc={message.img}
+                  imageSrc={message?.img}
+                  generatedImageSrcs={message?.generated_images}
                 />
               ))}
               

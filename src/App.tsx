@@ -13,7 +13,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
-import Signup from "./pages/signup";
+import Signup from "@/pages/Signup";
 
 const queryClient = new QueryClient();
 
@@ -32,7 +32,7 @@ const App = () => {
   }, []);
   
   return (
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/" >
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
@@ -42,8 +42,8 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
+              <Route path="/login/" element={<Login />} />
+              <Route path="/signup/" element={<Signup />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/chat/:chatId" element={<Chat />} />
               <Route path="*" element={<NotFound />} />

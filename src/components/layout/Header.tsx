@@ -156,7 +156,7 @@ const Header = () => {
       {/* Mobile Menu with animations */}
       {isMenuOpen && (
         <div className="fixed inset-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md z-40 pt-20 px-4 md:hidden">
-          <nav className="flex flex-col items-center gap-6 py-6 animate-fade-up">
+          <nav className="flex flex-col items-center gap-6 py-8 px-3 animate-fade-up bg-primary-100 rounded-lg">
             {navLinks.map((link, index) => (
               <Link
                 key={link.path}
@@ -176,7 +176,12 @@ const Header = () => {
               </Link>
             ))}
             <div className="flex flex-col w-full gap-4 mt-4">
-              <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+
+
+
+
+              { !userId && <>
+                <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                 <Button 
                   variant="outline" 
                   className="w-full rounded-full animate-fade-up"
@@ -193,6 +198,22 @@ const Header = () => {
                   Get Started
                 </Button>
               </Link>
+              </> }
+
+
+
+
+              <div className="w-full animate-fade-up flex justify-center">
+              <Link to="/dashboard">
+                <SignedIn>
+                      <UserButton />
+                </SignedIn>
+              </Link>
+              </div>
+
+
+
+
             </div>
           </nav>
         </div>

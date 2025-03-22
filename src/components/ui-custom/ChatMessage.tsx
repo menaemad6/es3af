@@ -1,19 +1,36 @@
-import { useState } from "react";
-import { Copy, Check, MessageCircle, Bot } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Copy, Check, MessageCircle, Bot, Play, Pause, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 
+import {useMultiLangTTS} from "@/hooks/useMultiLangTTs"
+
+import {generateAndUploadImages} from "@/services/supabaseFunctions.js"
+
+import {useGenerateImages} from "@/hooks/useGenerateImages"
+import LoadingSpinner from "@/components/ui/LoadingSpinner"
+import { Link } from "react-router-dom";
+
+
 interface ChatMessageProps {
+  id:string;
+  userId:string;
   content: string;
   isUser: boolean;
   timestamp: string;
   imageSrc?: string;
+  generatedImageSrcs?: string[];
 }
 
-const ChatMessage = ({ content, isUser, timestamp, imageSrc }: ChatMessageProps) => {
+const ChatMessage = ({ id ,userId, content, isUser, timestamp, imageSrc , generatedImageSrcs }: ChatMessageProps) => {
   const [copied, setCopied] = useState(false);
-  
+  const [isPlaying, setIsPlaying] = useState(false);
+
+
+
+  const synth = window.speechSynthesis;
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(content);
     setCopied(true);
@@ -22,7 +39,38 @@ const ChatMessage = ({ content, isUser, timestamp, imageSrc }: ChatMessageProps)
       setCopied(false);
     }, 2000);
   };
+
+
   
+  
+
+  // Text To Speech 
+  const { toggleSpeech } = useMultiLangTTS(isPlaying , setIsPlaying )
+  const playSound = () => {
+    toggleSpeech(content)
+};
+
+const { mutate: generateImages, isPending: isGeneratingImages } = useGenerateImages();
+
+
+const handleGenerateImages = async () => {
+  generateImages({userId , content , imagesCount:3 , id})
+  // const images = await generateAndUploadImages(content , 4 , id)
+  // console.log(images)
+};
+
+
+  useEffect(() => {
+    return () => {
+      synth.cancel();
+      setIsPlaying(false);
+    };
+  }, []);
+
+
+
+
+
   // This function renders the markdown content for AI messages
   // or plain text for user messages
   const renderContent = () => {
@@ -80,31 +128,57 @@ const ChatMessage = ({ content, isUser, timestamp, imageSrc }: ChatMessageProps)
         )}
         
         <div className="w-full max-w-full overflow-hidden">
-          <div
-            className={cn(
-              "p-4 rounded-2xl",
-              isUser
-                ? "bg-primary text-primary-foreground rounded-tr-sm"
-                : "bg-secondary text-secondary-foreground rounded-tl-sm"
-            )}
-          >
-            {imageSrc && (
-              <div className="mb-3">
-                <img 
-                  src={imageSrc} 
-                  alt="Message attachment" 
-                  className="w-full h-auto rounded-lg object-cover max-h-64"
-                />
-              </div>
-            )}
-            {renderContent()}
+
+
+
+<div
+    className={cn(
+      "p-4 rounded-2xl",
+      isUser
+        ? "bg-primary text-primary-foreground rounded-tr-sm"
+        : "bg-secondary text-secondary-foreground rounded-tl-sm"
+    )}
+  >
+    {/* Handle single image case */}
+    {imageSrc && (
+      <div className="mb-3">
+        <img 
+          src={imageSrc} 
+          alt="Message attachment" 
+          className="w-full h-auto rounded-lg object-cover max-h-64"
+        />
+      </div>
+    )}
+    
+    {/* Handle images array case */}
+    {generatedImageSrcs && generatedImageSrcs.length > 0 && (
+      <div className="mb-3 grid grid-cols-1  gap-2">
+        {generatedImageSrcs.map((image, index) => (
+          <div key={index} className="overflow-hidden rounded-lg">
+            <Link to={image} target="_blank" rel="noopener noreferrer" >
+            <img 
+              src={image} 
+              alt={`Message attachment ${index + 1}`} 
+              className="w-full h-auto object-cover max-h-64"
+              />
+              </Link>
           </div>
+        ))}
+      </div>
+    )}
+    
+    {renderContent()}
+  </div>
+
+
+          
           
           <div className="flex items-center mt-1 px-1">
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {timestamp}
             </span>
             
+            {/* Copy Button  */}
             <Button
               variant="ghost"
               size="icon"
@@ -118,6 +192,42 @@ const ChatMessage = ({ content, isUser, timestamp, imageSrc }: ChatMessageProps)
                 <Copy className="h-3 w-3 text-gray-500" />
               )}
             </Button>
+
+
+              {/* Image Generation Button  */}
+              <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={handleGenerateImages}
+              aria-label="Copy message"
+            >
+              {isGeneratingImages ? (
+                <LoadingSpinner width={15} height={15} />
+              ) : (
+                <Image className="h-3 w-3 text-gray-500" />
+              )}
+            </Button>
+
+
+
+              {/* Text To Speech Button  */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={playSound}
+              aria-label="Copy message"
+            >
+              {isPlaying ? (
+                <Pause className="h-3 w-3 text-green-500" fill="rgb(34 197 94)" stroke="rgb(34 197 94)" />
+              ) : (
+                <Play className="h-3 w-3 text-gray-500" />
+              )}
+            </Button>
+
+
+
           </div>
         </div>
         

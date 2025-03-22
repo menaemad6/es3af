@@ -23,57 +23,121 @@ const Index = () => {
   const cursorRef = useRef<HTMLDivElement>(null);
   const particlesRef = useRef<HTMLDivElement>(null);
   
-  // Track cursor position for custom cursor effect
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setCursorPosition({ x: e.clientX, y: e.clientY });
-      
-      // Generate particle on mouse movement (throttled)
-      if (particlesRef.current && Math.random() > 0.7) {
-        const particle = document.createElement('div');
-        particle.className = 'absolute w-1 h-1 rounded-full bg-primary/40 animate-particle';
-        particle.style.left = `${e.clientX}px`;
-        particle.style.top = `${e.clientY}px`;
-        particlesRef.current.appendChild(particle);
-        
-        // Remove particle after animation
-        setTimeout(() => {
-          if (particlesRef.current && particlesRef.current.contains(particle)) {
-            particlesRef.current.removeChild(particle);
-          }
-        }, 1000);
-      }
-    };
+// Track cursor position for custom cursor effect
+useEffect(() => {
+  const handleMouseMove = (e: MouseEvent) => {
+    setCursorPosition({ x: e.clientX, y: e.clientY });
     
-    const handleMouseOver = (e: MouseEvent) => {
-      if (e.target instanceof HTMLElement) {
-        const isClickable = e.target.closest('a, button, [role="button"]');
-        if (isClickable) {
-          setCursorSize(70);
-        } else {
-          setCursorSize(40);
+    // Generate multiple particles on mouse movement
+    if (particlesRef.current) {
+      // Increase particle generation probability (reduced threshold from 0.3 to 0.1)
+      if (Math.random() > 0.1) {
+        // Generate 10-20 particles instead of 3-5
+        const particleCount = Math.floor(Math.random() * 10) + 10;
+        
+        for (let i = 0; i < particleCount; i++) {
+          const particle = document.createElement('div');
+          
+          // Random size for variety (between 1-3px)
+          const size = Math.random() * 2 + 1;
+          
+          // Random offset from cursor position (within 15px radius)
+          const offsetX = (Math.random() - 0.5) * 30;
+          const offsetY = (Math.random() - 0.5) * 30;
+          
+          // Random opacity for visual interest
+          const opacity = Math.random() * 0.5 + 0.2;
+          
+          // Apply styles
+          particle.className = 'absolute rounded-full bg-primary animate-particle';
+          particle.style.width = `${size}px`;
+          particle.style.height = `${size}px`;
+          particle.style.left = `${e.clientX + offsetX}px`;
+          particle.style.top = `${e.clientY + offsetY}px`;
+          particle.style.opacity = `${opacity}`;
+          
+          particlesRef.current.appendChild(particle);
+          
+          // Remove particle after animation (with random duration for variety)
+          const duration = 800 + Math.random() * 400; // 800-1200ms
+          setTimeout(() => {
+            if (particlesRef.current && particlesRef.current.contains(particle)) {
+              particlesRef.current.removeChild(particle);
+            }
+          }, duration);
         }
       }
-    };
-    
-    window.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseover', handleMouseOver);
-    
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseover', handleMouseOver);
-    };
-  }, []);
-  
-  // Update cursor position
-  useEffect(() => {
-    if (cursorRef.current) {
-      cursorRef.current.style.transform = `translate(${cursorPosition.x}px, ${cursorPosition.y}px)`;
-      cursorRef.current.style.width = `${cursorSize}px`;
-      cursorRef.current.style.height = `${cursorSize}px`;
     }
-  }, [cursorPosition, cursorSize]);
+  };
   
+  const handleMouseOver = (e: MouseEvent) => {
+    if (e.target instanceof HTMLElement) {
+      const isClickable = e.target.closest('a, button, [role="button"]');
+      if (isClickable) {
+        setCursorSize(70);
+      } else {
+        setCursorSize(40);
+      }
+    }
+  };
+  
+  window.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseover', handleMouseOver);
+  
+  return () => {
+    window.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseover', handleMouseOver);
+  };
+}, []);
+
+// Update cursor position
+useEffect(() => {
+  if (cursorRef.current) {
+    cursorRef.current.style.transform = `translate(${cursorPosition.x}px, ${cursorPosition.y}px)`;
+    cursorRef.current.style.width = `${cursorSize}px`;
+    cursorRef.current.style.height = `${cursorSize}px`;
+  }
+}, [cursorPosition, cursorSize]);
+
+// Intersection Observer setup for scroll animations
+useEffect(() => {
+  observerRef.current = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("active");
+        }
+      });
+    },
+    {
+      threshold: 0.1,
+      rootMargin: "0px 0px -50px 0px",
+    }
+  );
+  
+  const animatedElements = document.querySelectorAll(".animate-on-scroll");
+  animatedElements.forEach((el) => {
+    observerRef.current?.observe(el);
+  });
+  
+  return () => {
+    if (observerRef.current) {
+      animatedElements.forEach((el) => {
+        observerRef.current?.unobserve(el);
+      });
+    }
+  };
+}, []);
+
+
+
+
+
+
+
+
+
+
   // Track scroll position for parallax effect
   useEffect(() => {
     const handleScroll = () => {
@@ -87,7 +151,7 @@ const Index = () => {
   // Simulate AI typing effect
   useEffect(() => {
     if (showDemo) {
-      const message = "Based on the symptoms you've described, this could be indicative of acute myocarditis. I would recommend further cardiac evaluation including an ECG and troponin levels.";
+      const message = " The cardiovascular system includes the heart, blood flow, ECG basics, and common conditions like hypertension, MI, and heart failure.";
       let i = 0;
       setIsTyping(true);
       
@@ -242,18 +306,22 @@ const Index = () => {
           </div>
             
           {/* Neural network lines */}
-          <svg className="absolute inset-0 w-full h-full z-0 opacity-30">
+          <svg className="absolute inset-0 w-full h-full z-0 opacity-30" viewBox="0 0 100 100">
             {[...Array(15)].map((_, i) => {
               const x1 = Math.random() * 100;
               const y1 = Math.random() * 100;
               const x2 = Math.random() * 100;
               const y2 = Math.random() * 100;
+              const cx = (x1 + x2) / 2 + Math.random() * 20 - 10;
+              const cy = (y1 + y2) / 2 + Math.random() * 20 - 10;
+              
               return (
                 <path 
                   key={i}
-                  d={`M${x1}%,${y1}% Q${(x1+x2)/2+Math.random()*20-10}%,${(y1+y2)/2+Math.random()*20-10}% ${x2}%,${y2}%`}
+                  d={`M${x1},${y1} Q${cx},${cy} ${x2},${y2}`}
                   stroke="currentColor"
                   strokeWidth="0.5"
+                  fill="none"
                   className="text-primary/30 neural-line"
                   style={{
                     animation: `pulseLine ${3 + Math.random() * 4}s infinite`,
@@ -263,6 +331,7 @@ const Index = () => {
               );
             })}
           </svg>
+
             
           {/* Floating icons with parallax */}
           <ParallaxEffect sensitivity={1.5}>
@@ -522,7 +591,7 @@ const Index = () => {
               <div className="ml-2 text-sm font-medium">Es3af Medical Chat</div>
             </div>
             
-            <div className="p-6 h-[350px] flex flex-col relative backdrop-blur-sm bg-background/50">
+            <div className={`p-6 h-[${showDemo ? "550px" : "350px"}] flex flex-col relative backdrop-blur-sm bg-background/50 `} >
               <div className="flex-1 space-y-4 overflow-y-auto pr-2">
                 <div className="flex items-start max-w-[80%] animate-fade-in opacity-100" style={{ animationDuration: "0.5s" }}>
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2 mt-1 flex-shrink-0 shadow-sm">
@@ -543,7 +612,7 @@ const Index = () => {
                     <div className="flex justify-end animate-fade-in opacity-100" style={{ animationDuration: "0.5s", animationDelay: "0.2s" }}>
                       <div>
                         <div className="p-3 rounded-2xl bg-gradient-to-br from-primary to-primary-600 text-white rounded-tr-sm max-w-[80%] shadow-md">
-                          <p>I have a 22-year-old patient with chest pain, fever, and elevated troponin levels following a viral illness. What could this be?</p>
+                          <p>I have an exam on the cardiovascular system. Can you summarize the key points?</p>
                         </div>
                         <div className="mt-1 mr-1 text-right">
                           <span className="text-xs text-gray-500">You • Just now</span>

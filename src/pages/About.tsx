@@ -20,20 +20,45 @@ const About = () => {
     const handleMouseMove = (e: MouseEvent) => {
       setCursorPosition({ x: e.clientX, y: e.clientY });
       
-      // Generate particle on mouse movement (throttled)
-      if (particlesRef.current && Math.random() > 0.7) {
-        const particle = document.createElement('div');
-        particle.className = 'absolute w-1 h-1 rounded-full bg-primary/40 animate-particle';
-        particle.style.left = `${e.clientX}px`;
-        particle.style.top = `${e.clientY}px`;
-        particlesRef.current.appendChild(particle);
-        
-        // Remove particle after animation
-        setTimeout(() => {
-          if (particlesRef.current && particlesRef.current.contains(particle)) {
-            particlesRef.current.removeChild(particle);
+      // Generate multiple particles on mouse movement
+      if (particlesRef.current) {
+        // Increase particle generation probability (reduced threshold from 0.7 to 0.3)
+        if (Math.random() > 0.3) {
+          // Generate 3-5 particles instead of just one
+          const particleCount = Math.floor(Math.random() * 10) + 3;
+          
+          for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            
+            // Random size for variety (between 1-3px)
+            const size = Math.random() * 2 + 1;
+            
+            // Random offset from cursor position (within 15px radius)
+            const offsetX = (Math.random() - 0.5) * 30;
+            const offsetY = (Math.random() - 0.5) * 30;
+            
+            // Random opacity for visual interest
+            const opacity = Math.random() * 0.5 + 0.2;
+            
+            // Apply styles
+            particle.className = 'absolute rounded-full bg-primary animate-particle';
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.left = `${e.clientX + offsetX}px`;
+            particle.style.top = `${e.clientY + offsetY}px`;
+            particle.style.opacity = `${opacity}`;
+            
+            particlesRef.current.appendChild(particle);
+            
+            // Remove particle after animation (with random duration for variety)
+            const duration = 800 + Math.random() * 400; // 800-1200ms
+            setTimeout(() => {
+              if (particlesRef.current && particlesRef.current.contains(particle)) {
+                particlesRef.current.removeChild(particle);
+              }
+            }, duration);
           }
-        }, 1000);
+        }
       }
     };
     
@@ -95,6 +120,11 @@ const About = () => {
       }
     };
   }, []);
+
+
+
+
+
   
   const values = [
     {
