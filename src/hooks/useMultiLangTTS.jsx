@@ -47,7 +47,7 @@ const useMultiLangTTS = (isPlaying, setIsPlaying) => {
     const utterance = new SpeechSynthesisUtterance(sentences.join(" "));
     // utterance.lang = isArabic(text) ? "ar-SA" : "en-US";
     utterance.lang = "en-US"; // English Only For Now
-    utterance.rate = 1.5;
+    utterance.rate = 1.1;
     utterance.pitch = 1;
 
     utterance.onend = () => {

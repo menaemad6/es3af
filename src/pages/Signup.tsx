@@ -48,7 +48,7 @@ const Signup = () => {
 
           
         <div className="h-full w-full flex items-center justify-center">
-        <SignUp path="/signup" signInUrl="login"/>
+        <SignUp path="/signup" signInUrl="login" forceRedirectUrl="/dashboard" />
     </div>
 
 

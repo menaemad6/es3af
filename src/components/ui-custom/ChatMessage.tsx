@@ -182,7 +182,7 @@ const handleGenerateImages = async () => {
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              className={`h-6 w-6 ml-1 ${isUser && "opacity-0"} group-hover:opacity-100 transition-opacity`}
               onClick={copyToClipboard}
               aria-label="Copy message"
             >
@@ -198,7 +198,7 @@ const handleGenerateImages = async () => {
               <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              className={`h-6 w-6 ml-1 ${isUser && "opacity-0"} group-hover:opacity-100 transition-opacity`}
               onClick={handleGenerateImages}
               aria-label="Copy message"
             >
@@ -215,7 +215,7 @@ const handleGenerateImages = async () => {
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              className={`h-6 w-6 ml-1 ${isUser && "opacity-0"} group-hover:opacity-100 transition-opacity`}
               onClick={playSound}
               aria-label="Copy message"
             >
