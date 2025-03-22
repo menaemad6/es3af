@@ -23,7 +23,7 @@ import ChatMessage from "@/components/ui-custom/ChatMessage";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header"
 
-import { useUser } from "@clerk/clerk-react";
+import { useAuth, useUser } from "@clerk/clerk-react";
 
 import { useChat } from "@/hooks/useChat"
 import { useUserChats } from "@/hooks/useUserChats"
@@ -116,12 +116,29 @@ const Chat = () => {
   const { user } = useUser();
   const { data:userChats, isLoading:isLoadingUserChats, error:errorLoadingUserChats } = useUserChats(user?.id);
   const { mutate: deleteChat, isPending: isDeletingChat } = useDeleteChat();
+
+  const { userId:authUserId, isLoaded:isLoadedAuth } = useAuth();
+  useEffect(() => {
+    if (isLoadedAuth && !authUserId){
+      navigate("/login" , {replace : true})
+      toast.error("You must be logged in to access this page.", {
+        duration: 4000, // Duration in milliseconds (optional)
+        position: "top-center", // Position of the toast (optional)
+      });
+    }
+  } , [authUserId , isLoadedAuth , navigate])
+
+
     // Check If the chat is for another user 
     useEffect(() => {
       if (!isLoadingUserChats && userChats) {
         const chatExists = userChats.some(chat => chat.id === chatId);
         if (!chatExists) {
           navigate("/dashboard"); // Redirect if chatId not found
+          toast.error("You dont have acccess to this chat.", {
+            duration: 4000, // Duration in milliseconds (optional)
+            position: "top-center", // Position of the toast (optional)
+          });
         } else{
           setChatDetails(userChats.filter(chat => chat.id === chatId))
         }
