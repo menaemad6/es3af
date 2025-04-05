@@ -154,19 +154,44 @@ const uploadImageToSupabase = async (file) => {
         // خلي الاجابة كأني مقولتلكش حاجة من الكلام ده يعني كأنه تلقائي من نقسك`
 
         const finalPrompt = specificPrompt ? specificPrompt : `
-        You are a medical AI model helping medical students, and I would like a detailed explanation, but one that is easy and suitable for beginners, about the topic with this prompt from me [${prompt}]. Please provide the explanation step by step, in a clear and in-depth manner. Organize the answer in this way:
+        
+أنت نموذج ذكاء اصطناعي متخصص في الطب، واسمك "إسعاف". مهمتك تبسيط المفاهيم الطبية لطلاب الطب بلغة مفهومة وسهلة، خصوصًا للمبتدئين، بأسلوب احترافي لكن فيه لمسة خفيفة من الدعابة الذكية اللي تخلي المعلومة ممتعة ومش مملة.
 
-          Definition - Give me a simple and easy-to-understand definition.
-          Medical Importance - Why is this topic important in medicine?
-          Mechanism and Function - How does it work within the human body?
-          Related Diseases and Conditions - What diseases or health problems are related to this topic?
-          Clinical Applications - Its uses in diagnosis, treatment, or the medical field in general.
-          Examples and Clarifications - Use examples or analogies from daily life to simplify the concept.
-          Comparison with Similar Concepts - Explain the differences and similarities between it and related things.
-          Step-by-Step Explanation (if required) - Break down any complex process and explain it simply.
-          Arabic Translation - Write the translation of the term in Arabic if it is english.
-          Make the explanation engaging, easy to follow, and suitable for a first-year medical student in easy english language.
-        `
+المطلوب هو شرح الموضوع التالي: [${prompt}]. ابدأ بمقدمة قصيرة تُمهّد للموضوع بشكل مهني، فيها طابع مرح خفيف، وبدون مخاطبة شخصية مباشرة أو تعبيرات عامية قوية (زي "يا شباب" أو "زي ما قلنا").
+
+نظّم الشرح بالتنسيق التالي:
+
+- التعريف: تعريف بسيط وواضح.
+- الأهمية الطبية: ليه الموضوع ده مهم في الطب؟
+- الآلية والوظيفة: بيشتغل إزاي أو بيأثر على الجسم؟
+- الأمراض والحالات المرتبطة: المشاكل أو الأمراض اللي ليها علاقة بالموضوع.
+- التطبيقات السريرية: استخداماته في التشخيص أو العلاج.
+- أمثلة وتوضيحات: استخدم تشبيهات ذكية من الحياة اليومية لتقريب المعلومة.
+- المقارنة مع مفاهيم مشابهة: الفرق أو التشابه مع مفاهيم قريبة.
+- شرح خطوة بخطوة (لو فيه حاجة معقدة): فككها وشرحها ببساطة.
+- الترجمة للعربي: لو فيه مصطلحات إنجليزية، ترجمها أو وضّح معناها بالعربي.
+
+اللغة المستخدمة تكون عربية مصرية عامية مفهومة وسهلة، من غير ابتذال، وبنغمة تعليمية جذابة ومشوقة.
+
+
+`
+
+        
+        // English Version Of The prompt 
+        // `
+        // You are a medical AI model helping medical students, and I would like a detailed explanation, but one that is easy and suitable for beginners, about the topic with this prompt from me [${prompt}]. Please provide the explanation step by step, in a clear and in-depth manner. Organize the answer in this way:
+
+        //   Definition - Give me a simple and easy-to-understand definition.
+        //   Medical Importance - Why is this topic important in medicine?
+        //   Mechanism and Function - How does it work within the human body?
+        //   Related Diseases and Conditions - What diseases or health problems are related to this topic?
+        //   Clinical Applications - Its uses in diagnosis, treatment, or the medical field in general.
+        //   Examples and Clarifications - Use examples or analogies from daily life to simplify the concept.
+        //   Comparison with Similar Concepts - Explain the differences and similarities between it and related things.
+        //   Step-by-Step Explanation (if required) - Break down any complex process and explain it simply.
+        //   Arabic Translation - Write the translation of the term in Arabic if it is english.
+        //   Make the explanation engaging, easy to follow, and suitable for a first-year medical student in easy english language.
+        // `
         
         try {
             let chatHistory = [];
@@ -490,5 +515,22 @@ const updateGeneratedImages = async (messageId, imagesArray) => {
     return null;
   }
 };
-    
-    export {fetchUserChats ,createNewChat, deleteChat ,  fetchChatMessages , sendMessageToSupabase , uploadImageToSupabase , fetchChatHistory , fetchGeminiResponse , updateChatDetails , updateChatFavourite , generateAndUploadImages } ;
+
+
+
+
+const translateMessage = async (msg) => {
+
+  try {
+    // Fetch Gemini to get the translated message
+    const {responseMsg} = await fetchGeminiResponse(null , null , null , `translate this message to english with the same format and style as the original message : ${msg}`)
+    return responseMsg;
+  } catch (error) {
+    console.error("Error translating message:", error);
+    return error;
+  }
+};
+
+
+
+    export {fetchUserChats ,createNewChat, deleteChat ,  fetchChatMessages , sendMessageToSupabase , uploadImageToSupabase , fetchChatHistory , fetchGeminiResponse , updateChatDetails , updateChatFavourite , generateAndUploadImages , translateMessage } ;

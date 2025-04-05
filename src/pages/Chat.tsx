@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -99,7 +100,8 @@ const Chat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef(null);
   const isMobile = useIsMobile();
-
+  // Add ref to track previous message count and last message sender
+  const prevChatRef = useRef({ count: 0, lastSender: null, chatId: null });
 
   const [newMessage, setNewMessage] = useState("");
   // Image States 
@@ -151,14 +153,56 @@ const Chat = () => {
     const { mutate: fetchGemini, isPending: isFetchingGemini } = useGemini({ chatId });
 
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom when messages change, but only in specific cases
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chat]);
-  
+    // Reset tracking if chatId changes
+    if (chatId !== prevChatRef.current.chatId) {
+      prevChatRef.current = { count: 0, lastSender: null, chatId };
+    }
+
+    if (!chat || chat.length === 0) {
+      // Always scroll on initial render with no messages
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+
+    const lastMessage = chat[chat.length - 1];
+    const prevCount = prevChatRef.current.count;
+    const isChatSwitch = chatId !== prevChatRef.current.chatId;
+    
+    // Determine if we should scroll based on several conditions
+    const shouldScroll = 
+      // First load (chat count changed from 0)
+      (prevCount === 0 && chat.length > 0) ||
+      // User sent a new message (last message is from user)
+      (lastMessage.role === "user") ||
+      // Initial load after data fetch 
+      (!isLoadingChat && prevCount === 0 && chat.length > 0) ||
+      // When switching to a different chat
+      isChatSwitch;
+    
+    // Update our ref with current values
+    prevChatRef.current = { 
+      count: chat.length, 
+      lastSender: lastMessage.role,
+      chatId
+    };
+    
+    if (shouldScroll) {
+      // Use a small timeout to ensure the DOM is updated
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  }, [chat, isLoadingChat, chatId]);
 
   const resetPrompt = () => {
     setNewMessage("");
+    // Reset textarea height
+    const textarea = document.getElementById("message-input");
+    if (textarea) {
+      textarea.style.height = "36px";
+    }
   };
   
   const resetImage = () => {
@@ -179,9 +223,11 @@ const Chat = () => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    // if creating new chat 
-    
-    
+    // Force scroll to bottom when user sends a message
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+
     let uploadedImageUrl = null;
     try {
       
@@ -399,7 +445,7 @@ const Chat = () => {
 
 
           {/* Chat messages */}
-          <ScrollArea className="flex-1 p-4">
+          <ScrollArea className="flex-1 p-4 pb-36">
 
             {isLoadingChat ? <div className="max-w-3xl h-full mx-auto flex justify-center items-center"><LoadingSpinner width={50} height={50} /></div>  : 
             <div className="max-w-3xl mx-auto">
@@ -438,99 +484,130 @@ const Chat = () => {
 
           
           {/* Quick terms floating button */}
-          <div className="relative">
-            <div className="absolute bottom-20 right-4">
-              <div className="relative">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full h-12 w-12 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow"
-                  onClick={() => setIsQuickTermsOpen(!isQuickTermsOpen)}
-                >
-                  {isQuickTermsOpen ? (
-                    <X className="h-5 w-5" />
-                  ) : (
-                    <PlusCircle className="h-5 w-5" />
-                  )}
-                </Button>
-                
-                {isQuickTermsOpen && (
-                  <div className="absolute bottom-14 right-0 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-border animate-fade-up">
-                    <h4 className="text-sm font-medium px-2 py-1 text-gray-500">Quick Terms</h4>
-                    <div className="flex flex-wrap gap-2 p-2">
-                      {quickMedicalTerms.map((term) => (
-                        <Button
-                          key={term}
-                          variant="outline"
-                          size="sm"
-                          className="h-auto py-1 px-2 text-xs"
-                          onClick={() => handleQuickTermClick(term)}
-                        >
-                          {term}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
+          <div className="fixed bottom-[8rem] right-4 z-10">
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-full h-12 w-12 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow"
+                onClick={() => setIsQuickTermsOpen(!isQuickTermsOpen)}
+              >
+                {isQuickTermsOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <PlusCircle className="h-5 w-5" />
                 )}
-              </div>
+              </Button>
+              
+              {isQuickTermsOpen && (
+                <div className="absolute bottom-14 right-0 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-border animate-fade-up">
+                  <h4 className="text-sm font-medium px-2 py-1 text-gray-500">Quick Terms</h4>
+                  <div className="flex flex-wrap gap-2 p-2">
+                    {quickMedicalTerms.map((term) => (
+                      <Button
+                        key={term}
+                        variant="outline"
+                        size="sm"
+                        className="h-auto py-1 px-2 text-xs"
+                        onClick={() => handleQuickTermClick(term)}
+                      >
+                        {term}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           
 
 
 
-          {/* Message input */}
-          <div className="p-4 border-t border-border bg-background">
-            <form onSubmit={handleSendMessage} className="max-w-3xl mx-auto">
-              <div className="flex items-center gap-2">
-
-
-                
-                {/* Upload Image  */}
-                <ImageUpload image={image} imageBase64={imageBase64} imagePreview={imagePreview} isLoadingImage={isLoadingImage} setImage={setImage} setImageBase64={setImageBase64} setImagePreview={setImagePreview} setIsLoadingImage={setIsLoadingImage} fileInputRef={fileInputRef} />
-
-                {/* Show Uploaded Image If Exists  */}
-                {imagePreview && (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                        <div className="h-10 w-content rounded-lg shadow-lg p-1" data-tooltip-id="image-uploaded-tooltip">
-                                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-md" onClick={resetImage} />
-                                        </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                        <div className="h-20 w-content rounded-lg shadow-lg p-1" data-tooltip-id="image-uploaded-tooltip">
-                                          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-md" />
-                                        </div>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                )}
-                
-                <div className="relative flex-1">
-                  <Input
-                    id="message-input"
-                    placeholder="Type your medical question..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    className="pl-4 pr-12 py-6 rounded-xl"
-                    disabled={isSendingMessage ||  isFetchingGemini}
-                  />
+          {/* Message input - Fixed at bottom */}
+          <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-border bg-background shadow-lg z-10">
+            <div className={`transition-all duration-300 ${isMobile ? "w-full" : "md:ml-72"}`}>
+              <div className="max-w-3xl mx-auto">
+                <form onSubmit={handleSendMessage} className="w-full">
+                  <div className="relative">
+                    {/* Image Preview - Floating above input */}
+                    {imagePreview && (
+                      <div className="absolute bottom-full mb-2 left-0">
+                        <div className="relative rounded-md overflow-hidden bg-background border border-border shadow-md">
+                          <div className="flex items-center">
+                            <div className="h-10 w-16 relative overflow-hidden">
+                              <img 
+                                src={imagePreview} 
+                                alt="Preview" 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="px-2 text-xs text-muted-foreground truncate max-w-[120px]">
+                              Image attached
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 mr-0.5"
+                              onClick={resetImage}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   
-                  <Button
-                    type="submit"
-                    disabled={!newMessage.trim() || isSendingMessage ||  isFetchingGemini}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg p-0"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
+                    <div className="flex items-center gap-2">
+                      {/* Upload Image  */}
+                      <ImageUpload image={image} imageBase64={imageBase64} imagePreview={imagePreview} isLoadingImage={isLoadingImage} setImage={setImage} setImageBase64={setImageBase64} setImagePreview={setImagePreview} setIsLoadingImage={setIsLoadingImage} fileInputRef={fileInputRef} />
+                      
+                      <div className="relative flex-1">
+                        <div className="relative w-full rounded-xl border bg-background focus-within:ring-1 focus-within:ring-ring">
+                          <textarea
+                            id="message-input"
+                            placeholder="Type your medical question..."
+                            value={newMessage}
+                            onChange={(e) => {
+                              setNewMessage(e.target.value);
+                              // Auto-resize
+                              e.target.style.height = '36px';
+                              e.target.style.height = Math.min(e.target.scrollHeight, 160) + 'px';
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                if (newMessage.trim()) {
+                                  handleSendMessage(e);
+                                }
+                              }
+                            }}
+                            className="border-0 bg-transparent px-3 py-2 text-sm w-full resize-none outline-none focus-visible:ring-0 max-h-[160px]"
+                            style={{ height: '36px', minHeight: '36px', overflow: 'hidden', lineHeight: '1.5' }}
+                            rows={1}
+                            disabled={isSendingMessage || isFetchingGemini}
+                          />
+                          <div className="absolute right-2 bottom-1.5">
+                            <Button
+                              type="submit"
+                              size="icon"
+                              disabled={!newMessage.trim() || isSendingMessage || isFetchingGemini}
+                              className="h-7 w-7 rounded-md"
+                            >
+                              <Send className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-xs text-center text-gray-500 mt-2">
+                      Es3af provides information for educational purposes only. Always consult with a healthcare professional for medical advice.
+                    </p>
+                  </div>
+                </form>
               </div>
-              
-              <p className="text-xs text-center text-gray-500 mt-2">
-                Es3af provides information for educational purposes only. Always consult with a healthcare professional for medical advice.
-              </p>
-            </form>
+            </div>
           </div>
         </main>
       </div>
