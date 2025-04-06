@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,8 +5,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { PlusCircle, MessageCircle, Clock, Settings, X, ChevronLeft } from "lucide-react";
 import { useAuth, useUser } from "@clerk/clerk-react";
-
-
 
 import { useUserChats } from "@/hooks/useUserChats"
 import { useDeleteChat } from "@/hooks/useDeleteChat"
@@ -35,7 +32,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const location = useLocation();
   const [mounted, setMounted] = useState(false);
 
-
   const [deletedChatId, setDeletedChatId] = useState(null);
   const currentChatId = useParams()?.id || null;
   const navigate = useNavigate();
@@ -58,7 +54,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     navigate("/dashboard");
   }
 
-  
   const handleDeleteChat = (e, chatId) => {
     e.stopPropagation();
     e.preventDefault();
@@ -67,7 +62,6 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     setDeletedChatId(chatId);
   };
   
-
 
   useEffect(() => {
     setMounted(true);
@@ -88,12 +82,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       )}
       
       <aside 
-        className={`fixed top-0 left-0 z-50 h-full w-72 bg-sidebar border-r border-sidebar-border transition-transform duration-300 transform ${
+        className={`fixed top-0 left-0 z-50 h-[calc(100vh-4rem)] mt-16 w-72 bg-sidebar border-r border-sidebar-border transition-transform duration-300 transform ${
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+          {/* <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
             <Link to="/dashboard" className="flex items-center gap-2 font-semibold">
               <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xs">
                 E
@@ -118,7 +112,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-          </div>
+          </div> */}
           
           <div className="p-4">
               <Button className="w-full justify-start gap-2" onClick={(e) => handleCreateNewChat(e)}>
@@ -134,7 +128,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-sidebar-foreground/70">
                 Recent Chats
               </h2>
-              <ScrollArea className="h-[calc(100vh-180px)]">
+              <ScrollArea className="h-[calc(100vh-16rem)]">
                 <div className="space-y-1 p-2">
                   
                   {isLoadingUserChats || !isLoaded && Array.from({ length: 6 }).map((_, index) => (
