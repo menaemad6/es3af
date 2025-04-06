@@ -32,6 +32,7 @@ import { useDeleteChat } from "@/hooks/useDeleteChat"
 import { useSendMessage } from "@/hooks/useSendMessage"
 import { useGemini } from "@/hooks/useGemini"
 import { useAddChatFavourite } from "@/hooks/useAddChatFavourite"
+import { useExportChat } from "@/hooks/useExportChat"
 
 
 
@@ -343,10 +344,21 @@ const Chat = () => {
   // };
   
   const { mutate: addChatFavourite, isPending: isAddingChatFavourite } = useAddChatFavourite();
-
   const handleAddToFavorites = async () => {
     addChatFavourite({chatId , userId:user?.id , isFavourite:!(chatDetails?.at(0)?.favourite)})
   }
+
+  const { mutate: exportChat, isPending: isExportingChat } = useExportChat();
+  const handleExportChat = async () => {
+    exportChat({
+      chatInfo:{...userChats?.find(chat => chat.id === chatId)} ,
+      userInfo:{name: user?.fullName , email: user?.emailAddresses?.at(0)?.emailAddress } ,
+      chatMessages : chat
+      }
+      )
+  }
+
+
 
 
   const handleDeleteChat = () => {
@@ -414,8 +426,11 @@ const Chat = () => {
                 
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <DownloadCloud className="h-5 w-5" />
+                    <Button variant="ghost" size="icon" onClick={handleExportChat} disabled={isDeletingChat}>
+                    {isDeletingChat ?
+                       <LoadingSpinner width={15} height={15} /> : 
+                       <DownloadCloud className="h-5 w-5" />
+                      }
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Export conversation</TooltipContent>
