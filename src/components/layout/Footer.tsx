@@ -98,6 +98,8 @@ const Footer = () => {
         <div className="border-t border-gray-200 dark:border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             © {currentYear} Es3af. All rights reserved.
+            <br />
+             Developed By <span className="text-primary-600 text-2xl"><a href="https://mina-emad.netlify.app" target="_blank">Mina Emad</a></span>
           </p>
           <div className="mt-4 md:mt-0">
             <ul className="flex space-x-8">
