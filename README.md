@@ -15,8 +15,7 @@
 
 Es3af is an intelligent medical assistant designed to help medical students and healthcare professionals access simplified medical information through an intuitive chat interface. Powered by Google's Gemini AI, Es3af provides detailed explanations of medical concepts, pathophysiology, treatments, and other healthcare topics in a conversational format.
 
-<details>
-<summary><b>🌟 Key Features</b></summary>
+<b>🌟 Key Features</b>
 
 - 🤖 **AI-Powered Medical Responses** - Get detailed, accurate medical information using Google's Gemini AI model
 - 🌐 **Multi-language Support** - Available in both English and Arabic
@@ -28,42 +27,127 @@ Es3af is an intelligent medical assistant designed to help medical students and 
 - 🖼️ **Image Upload/Sharing** - Share medical images for more context in discussions
 - 🌓 **Dark/Light Mode** - Choose your preferred theme
 - ⚡ **Quick Access Medical Terms** - Access common medical terms quickly during conversations
-</details>
+
 
 ## 🔧 Tech Stack
 
-<details>
-<summary><b>Frontend</b></summary>
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="96">
+        <img src="https://techstack-generator.vercel.app/react-icon.svg" alt="React" width="48" height="48" />
+        <br/>React
+      </td>
+      <td align="center" width="96">
+        <img src="https://techstack-generator.vercel.app/ts-icon.svg" alt="TypeScript" width="48" height="48" />
+        <br/>TypeScript
+      </td>
+      <td align="center" width="96">
+        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg" alt="Vite" width="48" height="48" />
+        <br/>Vite
+      </td>
+      <td align="center" width="96">
+        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-plain.svg" alt="Tailwind" width="48" height="48" />
+        <br/>Tailwind
+      </td>
+      <td align="center" width="96">
+        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/supabase/supabase-original.svg" alt="Supabase" width="48" height="48" />
+        <br/>Supabase
+      </td>
+      <td align="center" width="96">
+        <img src="https://www.vectorlogo.zone/logos/reactrouter/reactrouter-icon.svg" alt="React Router" width="48" height="48" />
+        <br/>Router
+      </td>
+    </tr>
+    <tr>
+      <td align="center" width="96">
+        <img src="https://avatars.githubusercontent.com/u/14957082" alt="Gemini AI" width="48" height="48" />
+        <br/>Gemini AI
+      </td>
+      <td align="center" width="96">
+        <img src="https://clerk.com/images/logo/clerk-logomark-light.svg" alt="Clerk" width="48" height="48" />
+        <br/>Clerk
+      </td>
+      <td align="center" width="96">
+        <img src="https://raw.githubusercontent.com/TanStack/query/main/media/logo.svg" alt="React Query" width="48" height="48" />
+        <br/>React Query
+      </td>
+      <td align="center" width="96">
+        <img src="https://cdn.worldvectorlogo.com/logos/zod.svg" alt="Zod" width="48" height="48" />
+        <br/>Zod
+      </td>
+      <td align="center" width="96">
+        <img src="https://avatars.githubusercontent.com/u/75042455" alt="Radix UI" width="48" height="48" />
+        <br/>Radix UI
+      </td>
+      <td align="center" width="96">
+        <img src="https://avatars.githubusercontent.com/u/139895814" alt="shadcn UI" width="48" height="48" />
+        <br/>shadcn/ui
+      </td>
+    </tr>
+  </table>
+</div>
 
-- ⚛️ React 18
-- 📘 TypeScript
-- ⚡ Vite
-- 🎨 Tailwind CSS
-- 🧩 shadcn/ui (UI component library)
-- 🔍 Lucide React (icons)
-- 🔄 React Router DOM (routing)
-- 🔐 Clerk (authentication)
-- 📊 React Query (API data fetching)
-</details>
+<b>⚛️ Frontend</b>
 
-<details>
-<summary><b>Backend & Data</b></summary>
+- React 18 - JavaScript library for building user interfaces
+- TypeScript - Type-safe programming language
+- Vite - Frontend build tool for rapid development
+- Tailwind CSS - Utility-first CSS framework
+- shadcn/ui - Beautifully designed components built with Radix UI and Tailwind
+- Lucide React - Beautiful & consistent icon toolkit
+- React Router DOM - Client-side routing for React applications
+- Clerk - Complete user management and authentication
+- React Query - Powerful data synchronization for React
 
-- 🗃️ Supabase (database and storage)
-- 🧠 Google Gemini API (AI model)
-</details>
 
-<details>
-<summary><b>UI/UX & Additional Libraries</b></summary>
+<b>🗃️ Backend & Data</b>
 
-- 🎭 Radix UI (accessible primitives)
-- 🔔 Sonner (toast notifications)
-- 📝 React Hook Form & Zod (form handling)
-- 📄 React Markdown (markdown rendering)
-- 📊 Recharts (data visualization)
-- 📑 HTML2PDF.js & jsPDF (PDF export)
-- 📅 Date-fns (date utilities)
-</details>
+- Supabase - Open-source Firebase alternative (database, auth, storage)
+- Google Gemini API - Google's advanced language model
+
+
+<b>🎭 UI/UX & Additional Libraries</b>
+
+- Radix UI - Unstyled, accessible UI components
+- Sonner - Toast notification component for React
+- React Hook Form & Zod - Form validation and handling
+- React Markdown - Markdown renderer for React
+- Recharts - Composable charting library built on React components
+- HTML2PDF.js & jsPDF - PDF generation tools
+- Date-fns - Modern JavaScript date utility library
+
+
+## 📂 Project Structure
+
+```
+es3af/
+├── dist/                   # Build output directory
+├── public/                 # Public assets
+├── src/
+│   ├── components/
+│   │   ├── layout/         # Layout components (Header, Footer, Sidebar)
+│   │   ├── ui/             # UI components from shadcn
+│   │   └── ui-custom/      # Custom UI components
+│   ├── hooks/              # Custom React hooks
+│   │   ├── useChat.js      # Chat functionality hook
+│   │   ├── useGemini.js    # AI integration hook
+│   │   └── ...
+│   ├── lib/                # Utility functions and configurations
+│   │   ├── supabaseFunctions.js  # Database operations
+│   │   ├── fetchTTS.js           # Text-to-speech service
+│   │   └── helpers.js            # Helper functions
+│   ├── App.tsx            # Main application component
+│   ├── index.css          # Global styles
+│   ├── main.tsx           # Application entry point
+│   └── supabase.js        # Supabase client setup
+├── index.html             # HTML entry point
+├── tailwind.config.ts     # Tailwind configuration
+├── tsconfig.json          # TypeScript configuration
+├── vite.config.ts         # Vite configuration
+├── package.json           # Dependencies and scripts
+└── README.md              # Project documentation
+```
 
 ## 🚀 Getting Started
 
@@ -104,6 +188,18 @@ npm run dev
 5️⃣ **Open your browser:**
 Navigate to `http://localhost:5173`
 
+## 🖥️ Demo Screenshots
+
+<div align="center">
+  <img src="https://placehold.co/800x450/6366f1/FFFFFF/png?text=Landing+Page" alt="Landing Page" width="400" />
+  <img src="https://placehold.co/800x450/6366f1/FFFFFF/png?text=Chat+Interface" alt="Chat Interface" width="400" />
+</div>
+
+<div align="center">
+  <img src="https://placehold.co/800x450/6366f1/FFFFFF/png?text=Dashboard" alt="Dashboard" width="400" />
+  <img src="https://placehold.co/800x450/6366f1/FFFFFF/png?text=Medical+Information" alt="Medical Information" width="400" />
+</div>
+
 ## 🌐 Deployment
 
 ```sh
@@ -137,6 +233,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-<p align="center">
-  Made with ❤️ for the medical community
-</p>
+<div align="center">
+  <img src="https://img.icons8.com/color/48/000000/health-checkup.png" width="24" height="24"/>
+  <p>Made with ❤️ for the medical community</p>
+
+</div>
