@@ -1,69 +1,142 @@
-# Welcome to your Lovable project
+# <img src="https://img.icons8.com/color/48/000000/health-checkup.png" width="32" height="32"/> Es3af
 
-## Project info
+> **Your AI-Powered Medical Assistant**
 
-**URL**: https://lovable.dev/projects/a3e74a06-5866-4402-a4c7-095324755f52
+[![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?logo=vite)](https://vitejs.dev/)
+[![Tailwind](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-2.49-3ECF8E?logo=supabase)](https://supabase.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## How can I edit this code?
+![Es3af Demo](https://placehold.co/800x400/6366f1/FFFFFF/png?text=Es3af+Medical+Assistant&font=montserrat)
 
-There are several ways of editing your application.
+## 🩺 Overview
 
-**Use Lovable**
+Es3af is an intelligent medical assistant designed to help medical students and healthcare professionals access simplified medical information through an intuitive chat interface. Powered by Google's Gemini AI, Es3af provides detailed explanations of medical concepts, pathophysiology, treatments, and other healthcare topics in a conversational format.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a3e74a06-5866-4402-a4c7-095324755f52) and start prompting.
+<details>
+<summary><b>🌟 Key Features</b></summary>
 
-Changes made via Lovable will be committed automatically to this repo.
+- 🤖 **AI-Powered Medical Responses** - Get detailed, accurate medical information using Google's Gemini AI model
+- 🌐 **Multi-language Support** - Available in both English and Arabic
+- 💬 **Interactive Chat Interface** - User-friendly chat interface with support for text and image inputs
+- 📚 **Rich Medical Explanations** - Structured responses with definitions, importance, mechanisms, clinical applications, and more
+- 📂 **Chat Management** - Save, favorite, delete, and export chat conversations
+- 🔒 **Secure Authentication** - User authentication and profile management with Clerk
+- 📱 **Responsive Design** - Modern UI that works smoothly on desktop and mobile devices
+- 🖼️ **Image Upload/Sharing** - Share medical images for more context in discussions
+- 🌓 **Dark/Light Mode** - Choose your preferred theme
+- ⚡ **Quick Access Medical Terms** - Access common medical terms quickly during conversations
+</details>
 
-**Use your preferred IDE**
+## 🔧 Tech Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+<details>
+<summary><b>Frontend</b></summary>
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- ⚛️ React 18
+- 📘 TypeScript
+- ⚡ Vite
+- 🎨 Tailwind CSS
+- 🧩 shadcn/ui (UI component library)
+- 🔍 Lucide React (icons)
+- 🔄 React Router DOM (routing)
+- 🔐 Clerk (authentication)
+- 📊 React Query (API data fetching)
+</details>
 
-Follow these steps:
+<details>
+<summary><b>Backend & Data</b></summary>
 
+- 🗃️ Supabase (database and storage)
+- 🧠 Google Gemini API (AI model)
+</details>
+
+<details>
+<summary><b>UI/UX & Additional Libraries</b></summary>
+
+- 🎭 Radix UI (accessible primitives)
+- 🔔 Sonner (toast notifications)
+- 📝 React Hook Form & Zod (form handling)
+- 📄 React Markdown (markdown rendering)
+- 📊 Recharts (data visualization)
+- 📑 HTML2PDF.js & jsPDF (PDF export)
+- 📅 Date-fns (date utilities)
+</details>
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (v18 or higher recommended)
+- npm or yarn package manager
+
+### Installation
+
+1️⃣ **Clone the repository:**
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+git clone https://github.com/yourusername/es3af.git
+cd es3af
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2️⃣ **Install dependencies:**
+```sh
+npm install
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3️⃣ **Configure environment variables:**
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Create a `.env` file in the root directory:
+```env
+VITE_CLERK_PUBLISHABLE_KEY=your_clerk_key
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_API_KEY=your_supabase_anon_key
+VITE_GEMINI_API_KEY=your_gemini_api_key
+VITE_APP_LANG=en   # or ar for Arabic
+```
+
+4️⃣ **Start the development server:**
+```sh
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+5️⃣ **Open your browser:**
+Navigate to `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🌐 Deployment
 
-**Use GitHub Codespaces**
+```sh
+# Build the project
+npm run build
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Deploy the dist folder to your preferred hosting service
+# We recommend Netlify, Vercel, or GitHub Pages
+```
 
-## What technologies are used for this project?
+## 🤝 Contributing
 
-This project is built with .
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## How can I deploy this project?
+## 📝 License
 
-Simply open [Lovable](https://lovable.dev/projects/a3e74a06-5866-4402-a4c7-095324755f52) and click on Share -> Publish.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## I want to use a custom domain - is that possible?
+## 🙏 Acknowledgements
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+- Google Gemini API for powering the AI responses
+- Supabase for providing backend services
+- shadcn/ui for the beautiful component library
+- The medical community for input and validation
+
+---
+
+<p align="center">
+  Made with ❤️ for the medical community
+</p>
