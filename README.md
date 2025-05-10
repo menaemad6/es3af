@@ -188,17 +188,6 @@ npm run dev
 5️⃣ **Open your browser:**
 Navigate to `http://localhost:5173`
 
-## 🖥️ Demo Screenshots
-
-<div align="center">
-  <img src="https://placehold.co/800x450/6366f1/FFFFFF/png?text=Landing+Page" alt="Landing Page" width="400" />
-  <img src="https://placehold.co/800x450/6366f1/FFFFFF/png?text=Chat+Interface" alt="Chat Interface" width="400" />
-</div>
-
-<div align="center">
-  <img src="https://placehold.co/800x450/6366f1/FFFFFF/png?text=Dashboard" alt="Dashboard" width="400" />
-  <img src="https://placehold.co/800x450/6366f1/FFFFFF/png?text=Medical+Information" alt="Medical Information" width="400" />
-</div>
 
 ## 🌐 Deployment
 
