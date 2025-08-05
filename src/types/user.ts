@@ -53,8 +53,8 @@ export const YEAR_OPTIONS = [
 export const GENDER_OPTIONS = [
   "Male", 
   "Female", 
-  "Other", 
-  "Prefer not to say"
+  // "Other", 
+  // "Prefer not to say"
 ] as const;
 
 export type FieldType = typeof FIELD_OPTIONS[number];
