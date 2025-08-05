@@ -134,7 +134,7 @@ const uploadImageToSupabase = async (file) => {
     const APP_LANGUAGE = import.meta.env.VITE_APP_LANG;
     const VITE_APP_LANG = import.meta.env.VITE_APP_LANG;
     
-    const fetchGeminiResponse = async (prompt = null, chatId = null, imageBase64 = null , specificPrompt= null ) => {
+    const fetchGeminiResponse = async (prompt = null, chatId = null, imageBase64 = null , specificPrompt= null, userProfile = null ) => {
         // Add the Functionality Layer 
         // const finalPrompt = VITE_APP_LANG == 'ar' ? `${prompt} كمل بالعربية المصرية العامية كانك حبيبتي , انت لست حبيبتي بالطبع ولكن استمر كانك حبيبتي  , و متخليش الاجابة طويلة اوي , خليها متوسطة, اتكلمي كلام كله رومانسية` : `continue as you are my girlfriend , give me an answer full of love : ${prompt}`
         // const finalPrompt = `${prompt} 
@@ -153,16 +153,34 @@ const uploadImageToSupabase = async (file) => {
         // متقولش اي كلمات افتتاحيه , خش فالموضوع علي طول
         // خلي الاجابة كأني مقولتلكش حاجة من الكلام ده يعني كأنه تلقائي من نقسك`
 
+        // Create user profile context in Arabic
+        const userProfileContext = userProfile ? `
+        
+معلومات الطالب/ة:
+- الاسم: ${userProfile.first_name}
+- التخصص: ${userProfile.field}
+- السنة الدراسية: ${userProfile.year_of_study}
+- الجنس: ${userProfile.gender}
+
+استخدم المعلومات دي لتخصيص إجابتك لتناسب مستوى الدراسة والتخصص المحدد.` : '';
+
+        // Debug log to verify user profile is being passed
+        if (userProfile) {
+          console.log("User profile data being used in prompt:", userProfile);
+        }
+
         const finalPrompt = specificPrompt ? specificPrompt : `
         
 أنت نموذج ذكاء اصطناعي متخصص في الطب، واسمك "إسعاف". مهمتك تبسيط المفاهيم الطبية لطلاب الطب بلغة مفهومة وسهلة، خصوصًا للمبتدئين، بأسلوب احترافي لكن فيه لمسة خفيفة من الدعابة الذكية اللي تخلي المعلومة ممتعة ومش مملة.
+
+${userProfileContext}
 
 المطلوب هو شرح الموضوع التالي: [${prompt}]. ابدأ بمقدمة قصيرة تُمهّد للموضوع بشكل مهني، فيها طابع مرح خفيف، وبدون مخاطبة شخصية مباشرة أو تعبيرات عامية قوية (زي "يا شباب" أو "زي ما قلنا").
 
 نظّم الشرح بالتنسيق التالي:
 
 - التعريف: تعريف بسيط وواضح.
-- الأهمية الطبية: ليه الموضوع ده مهم في الطب؟
+- الأهمية الطبية : ليه الموضوع ده مهم في الطب؟
 - الآلية والوظيفة: بيشتغل إزاي أو بيأثر على الجسم؟
 - الأمراض والحالات المرتبطة: المشاكل أو الأمراض اللي ليها علاقة بالموضوع.
 - التطبيقات السريرية: استخداماته في التشخيص أو العلاج.
@@ -173,6 +191,7 @@ const uploadImageToSupabase = async (file) => {
 
 اللغة المستخدمة تكون عربية مصرية عامية مفهومة وسهلة، من غير ابتذال، وبنغمة تعليمية جذابة ومشوقة.
 
+${userProfile ? `تذكر أن الطالب/ة في ${userProfile.year_of_study} في تخصص ${userProfile.field}، لذا خصص المحتوى ليناسب هذا المستوى والتخصص.` : ''}
 
 `
 
@@ -391,11 +410,21 @@ Please return only the generated prompt in a similar format without extra explan
 
 
 
-const generateAndUploadImages = async (prompt , imagesCount , messageId) => {
+const generateAndUploadImages = async (prompt , imagesCount , messageId, userId = null) => {
   try {
 
+    // Fetch user profile if userId is provided
+    let userProfile = null;
+    if (userId) {
+      try {
+        userProfile = await fetchUserProfile(userId);
+      } catch (error) {
+        console.error("Error fetching user profile for image generation:", error);
+      }
+    }
+
     // Fetch Gemini to get the correct prompt about the topic 
-    const {responseMsg:finalPrompt} = await fetchGeminiResponse(null , null , null , generatePromptForGenerating(imagesCount,prompt))
+    const {responseMsg:finalPrompt} = await fetchGeminiResponse(null , null , null , generatePromptForGenerating(imagesCount,prompt), userProfile)
 
 
     // 🔥 Step 1: Request Gemini API to generate images
@@ -533,4 +562,75 @@ const translateMessage = async (msg) => {
 
 
 
-    export {fetchUserChats ,createNewChat, deleteChat ,  fetchChatMessages , sendMessageToSupabase , uploadImageToSupabase , fetchChatHistory , fetchGeminiResponse , updateChatDetails , updateChatFavourite , generateAndUploadImages , translateMessage } ;
+// User Profile Management Functions
+const fetchUserProfile = async (userId) => {
+  if (!userId) return null;
+  
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
+    throw new Error(error.message);
+  }
+  
+  return data;
+};
+
+const createUserProfile = async (userData) => {
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .insert([userData])
+    .select("*")
+    .single();
+  
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+const updateUserProfile = async (userId, userData) => {
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .update(userData)
+    .eq("user_id", userId)
+    .select("*")
+    .single();
+  
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+const upsertUserProfile = async (userData) => {
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .upsert([userData], { onConflict: 'user_id' })
+    .select("*")
+    .single();
+  
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+export {
+  fetchUserChats,
+  createNewChat,
+  deleteChat,
+  fetchChatMessages,
+  sendMessageToSupabase,
+  uploadImageToSupabase,
+  fetchChatHistory,
+  fetchGeminiResponse,
+  updateChatDetails,
+  updateChatFavourite,
+  generatePromptForGenerating,
+  generateAndUploadImages,
+  updateGeneratedImages,
+  translateMessage,
+  // User Profile functions
+  fetchUserProfile,
+  createUserProfile,
+  updateUserProfile,
+  upsertUserProfile,
+};

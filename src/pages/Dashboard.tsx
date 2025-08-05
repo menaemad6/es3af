@@ -24,6 +24,9 @@ import { toast } from "sonner";
 import { useUserChats } from "@/hooks/useUserChats"
 import { useDeleteChat } from "@/hooks/useDeleteChat"
 import { useCreateChat } from "@/hooks/useCreateChat"
+import { useUserProfile, useUpdateUserProfile } from "@/hooks/useUserProfile"
+import { ProfileCompletionModal } from "@/components/ui-custom/ProfileCompletionModal"
+import { ProfileManager } from "@/components/ui-custom/ProfileManager"
 
 import {calculateTimeAgo , addHours} from "@/services/helpers.js"
 import { Skeleton } from "@/components/ui/skeleton";
@@ -95,10 +98,15 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobile, setIsMobile] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   
 
   const { userId, isLoaded } = useAuth();
   const navigate = useNavigate();
+
+  // User profile management
+  const { data: userProfile, isLoading: isLoadingProfile } = useUserProfile(userId);
+  const { mutate: updateProfile, isPending: isUpdatingProfile } = useUpdateUserProfile();
 
   useEffect(() => {
     if (isLoaded && !userId){
@@ -109,6 +117,32 @@ const Dashboard = () => {
       });
     }
   } , [userId , isLoaded , navigate])
+
+  // Check if profile is complete when user is loaded and profile is fetched
+  useEffect(() => {
+    if (isLoaded && userId && !isLoadingProfile && !userProfile) {
+      setShowProfileModal(true);
+    }
+  }, [isLoaded, userId, isLoadingProfile, userProfile]);
+
+  const handleProfileSubmit = (profileData) => {
+    updateProfile(
+      {
+        user_id: userId,
+        ...profileData,
+      },
+      {
+        onSuccess: () => {
+          setShowProfileModal(false);
+          toast.success("Profile completed successfully!");
+        },
+        onError: (error) => {
+          toast.error("Failed to save profile. Please try again.");
+          console.error("Profile update error:", error);
+        },
+      }
+    );
+  };
 
 
   useEffect(() => {
@@ -140,6 +174,14 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background to-gray-50/80 dark:from-background dark:to-gray-900/30">
       <Header />
+      
+      {/* Profile Completion Modal */}
+      <ProfileCompletionModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        onSubmit={handleProfileSubmit}
+        isLoading={isUpdatingProfile}
+      />
       
       <div className="flex-1 flex pt-16">
         {/* Sidebar */}
@@ -245,6 +287,7 @@ const Dashboard = () => {
                 <TabsTrigger value="recent">Recent Chats</TabsTrigger>
                 <TabsTrigger value="topics">Suggested Topics</TabsTrigger>
                 <TabsTrigger value="favorites">Favorites</TabsTrigger>
+                <TabsTrigger value="profile">Profile</TabsTrigger>
               </TabsList>
               
               <TabsContent value="recent" className="space-y-4">
@@ -397,8 +440,15 @@ const Dashboard = () => {
 
               </TabsContent>
 
-
-
+              <TabsContent value="profile" className="space-y-4">
+                <div className="max-w-2xl">
+                  <ProfileManager
+                    profile={userProfile}
+                    onUpdate={handleProfileSubmit}
+                    isLoading={isUpdatingProfile}
+                  />
+                </div>
+              </TabsContent>
 
               
             </Tabs>

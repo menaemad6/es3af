@@ -250,7 +250,8 @@ const Chat = () => {
         fetchGemini({
           prompt: newMessage,
           imageBase64,
-          chatId
+          chatId,
+          userId: user?.id
         });
 
         

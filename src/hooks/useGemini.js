@@ -2,7 +2,7 @@ import {  useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 // import { supabase } from "../supabase"; 
 
 import {useSendMessage} from "./useSendMessage";
-import { fetchGeminiResponse } from "../services/supabaseFunctions";
+import { fetchGeminiResponse, fetchUserProfile } from "../services/supabaseFunctions";
 
 
 // const sendMessageToSupabase = async ({ chatId, userId, role, text, img }) => {
@@ -37,7 +37,20 @@ const useGemini = () => {
 
 
   return useMutation({
-    mutationFn: ({prompt , imageBase64 , chatId  }) => fetchGeminiResponse(prompt , chatId , imageBase64 ),
+    mutationFn: async ({prompt , imageBase64 , chatId, userId }) => {
+      // Fetch user profile once per chat session
+      let userProfile = null;
+      if (userId) {
+        try {
+          userProfile = await fetchUserProfile(userId);
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          // Continue without profile if there's an error
+        }
+      }
+      
+      return fetchGeminiResponse(prompt, chatId, imageBase64, null, userProfile);
+    },
     onSuccess: (dataFromFetch, variables) => {
         queryClient.invalidateQueries(["geminiResponse" , Math.random()]);
 

@@ -11,7 +11,7 @@ const useGenerateImages = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({userId , content , imagesCount , id }) =>  generateAndUploadImages(content , imagesCount , id),
+    mutationFn: ({userId , content , imagesCount , id }) =>  generateAndUploadImages(content , imagesCount , id, userId),
 
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries(["user_chats", variables.userId]);
