@@ -130,7 +130,7 @@ const uploadImageToSupabase = async (file) => {
     
     
     const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-    const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+    const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
     const APP_LANGUAGE = import.meta.env.VITE_APP_LANG;
     const VITE_APP_LANG = import.meta.env.VITE_APP_LANG;
     
