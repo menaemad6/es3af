@@ -17,7 +17,9 @@ import {
   Zap,
   Target,
   Brain,
-  Star
+  Star,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Quiz, QuizQuestion, QuizAnswer, QuizResult } from '@/types/quiz';
 
@@ -240,6 +242,18 @@ export function QuizModal({
     }
   };
 
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      setCurrentQuestionStartTime(new Date());
+      setTimeElapsed(0);
+      
+      // Restore the previous answer if it exists
+      const previousAnswer = answers.find(a => a.questionId === quiz?.questions[currentQuestionIndex - 1]?.id);
+      setSelectedAnswer(previousAnswer?.selectedAnswer || '');
+    }
+  };
+
   const handleResetQuiz = () => {
     setSelectedAnswer('');
     setTimeElapsed(0);
@@ -282,15 +296,42 @@ export function QuizModal({
       <DialogContent className=" max-w-4xl max-h-[90vh] md:max-h-[90vh] h-screen md:h-[90vh] overflow-hidden p-0 w-screen md:w-auto">
         <div className="h-full flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="p-6 border-none">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">{quiz.title}</h2>
-              </div>
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <Home className="h-4 w-4" />
-              </Button>
+          <div className="p-4 md:p-6 border-b">
+            <div className="mb-4">
+              <h2 className="text-base md:text-lg font-bold">{quiz.title}</h2>
             </div>
+            
+            {/* Progress Section - Only show during quiz */}
+            {currentScreen === 'question' && (
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <span className="text-sm font-medium">
+                    Question {currentQuestionIndex + 1} of {quiz.questions.length}
+                  </span>
+                  <div className="flex items-center gap-2 sm:gap-4">
+                    <span className="text-xs sm:text-sm text-muted-foreground">
+                      Question time: {formatTime(timeElapsed)}
+                    </span>
+                    {timeRemaining !== null && (
+                      <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs sm:text-sm font-medium bg-muted border">
+                        <Clock className="h-3 w-3" />
+                        {formatTime(timeRemaining)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Progress 
+                  value={((currentQuestionIndex + 1) / quiz.questions.length) * 100} 
+                  className="h-2"
+                />
+                {timeRemaining !== null && (
+                  <Progress 
+                    value={(timeRemaining / (quiz.recommendedTime! * 60)) * 100} 
+                    className="h-1"
+                  />
+                )}
+              </div>
+            )}
           </div>
 
           {/* Content */}
@@ -326,16 +367,6 @@ export function QuizModal({
                     </div>
                   </div>
 
-                  {/* Instructions */}
-                  <div className="bg-muted/50 border rounded-lg p-4 max-w-md mx-auto">
-                    <h4 className="font-semibold mb-2">Instructions</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1 text-left">
-                      <li>• Read each question carefully</li>
-                      <li>• Select the best answer</li>
-                      <li>• Take your time</li>
-                    </ul>
-                  </div>
-
                   {/* Start Button */}
                   <div className="pt-4">
                     <Button 
@@ -347,59 +378,37 @@ export function QuizModal({
                       Start Quiz
                     </Button>
                   </div>
+
+                  {/* Instructions */}
+                  <div className="bg-muted/50 border rounded-lg p-4 max-w-md mx-auto">
+                    <h4 className="font-semibold mb-2">Instructions</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1 text-left">
+                      <li>• Read each question carefully</li>
+                      <li>• Select the best answer</li>
+                      <li>• Take your time</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             )}
 
             {currentScreen === 'question' && (
-              <div className="p-6">
+              <div className="p-4 md:p-6">
                 <div className="max-w-3xl mx-auto">
-                  {/* Progress and Timer */}
-                  <div className="mb-6">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium">
-                        Question {currentQuestionIndex + 1} of {quiz.questions.length}
-                      </span>
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm text-muted-foreground">
-                          Question time: {formatTime(timeElapsed)}
-                        </span>
-                        {timeRemaining !== null && (
-                          <div className="flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-muted border">
-                            <Clock className="h-3 w-3" />
-                            {formatTime(timeRemaining)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <Progress 
-                      value={((currentQuestionIndex + 1) / quiz.questions.length) * 100} 
-                      className="h-2"
-                    />
-                    {timeRemaining !== null && (
-                      <div className="mt-2">
-                        <Progress 
-                          value={(timeRemaining / (quiz.recommendedTime! * 60)) * 100} 
-                          className="h-1"
-                        />
-                      </div>
-                    )}
-                  </div>
-
                   {/* Question */}
-                  <Card className="mb-6">
-                    <CardHeader>
+                  <Card className="mb-4">
+                    <CardHeader className="pb-3">
                       <CardTitle className="text-lg">
                         {quiz.questions[currentQuestionIndex]?.question}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
+                    <CardContent className="pt-0">
+                      <div className="space-y-2">
                         {quiz.questions[currentQuestionIndex]?.options.map((option, index) => (
                           <button
                             key={index}
                             onClick={() => handleAnswerSelect(option)}
-                            className={`w-full p-4 text-left border rounded-lg transition-colors ${
+                            className={`w-full p-3 text-left border rounded-lg transition-colors ${
                               selectedAnswer === option
                                 ? 'border-primary bg-primary/5 text-primary'
                                 : 'border-border hover:border-primary/50 hover:bg-muted/50'
@@ -415,17 +424,31 @@ export function QuizModal({
                     </CardContent>
                   </Card>
 
-                  {/* Submit Button */}
-                  <div className="flex justify-end">
+                  {/* Navigation Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-3 sm:justify-between">
+                    <Button 
+                      onClick={handlePreviousQuestion}
+                      disabled={currentQuestionIndex === 0}
+                      variant="outline"
+                      size="lg"
+                      className="w-full sm:w-auto"
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-2" />
+                      Previous
+                    </Button>
                     <Button 
                       onClick={handleSubmitAnswer}
                       disabled={!selectedAnswer}
                       size="lg"
+                      className="w-full sm:w-auto"
                     >
                       {currentQuestionIndex + 1 === quiz.questions.length 
                         ? 'Finish Quiz' 
                         : 'Next Question'
                       }
+                      {currentQuestionIndex + 1 < quiz.questions.length && (
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      )}
                     </Button>
                   </div>
                 </div>

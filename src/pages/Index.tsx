@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Brain, BrainCircuit, Microscope, MessageSquare, LightbulbIcon, HeartPulse, ShieldPlus, ActivitySquare, Dna, TestTube, Sparkles } from "lucide-react";
+import { ArrowRight, Brain, BrainCircuit, Microscope, MessageSquare, LightbulbIcon, HeartPulse, ShieldPlus, ActivitySquare, Dna, TestTube, Sparkles, FileText } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import AnimatedButton from "@/components/ui-custom/AnimatedButton";
@@ -216,6 +216,11 @@ useEffect(() => {
       icon: BrainCircuit,
     },
     {
+      title: "AI Quiz Generation",
+      description: "Generate comprehensive quizzes from PDFs or text with intelligent question creation, progress tracking, and detailed analytics.",
+      icon: FileText,
+    },
+    {
       title: "Evidence-Based Learning",
       description: "Access the latest peer-reviewed medical research and clinical guidelines to support your education.",
       icon: Microscope,
@@ -224,11 +229,6 @@ useEffect(() => {
       title: "Clinical Decision Support",
       description: "Gain deeper understanding of differential diagnoses and treatment approaches in complex medical scenarios.",
       icon: LightbulbIcon,
-    },
-    {
-      title: "Personalized Education",
-      description: "Adaptive learning technology that evolves with your knowledge to optimize your medical education journey.",
-      icon: Sparkles,
     },
   ];
   
