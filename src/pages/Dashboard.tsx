@@ -27,6 +27,7 @@ import { useCreateChat } from "@/hooks/useCreateChat"
 import { useUserProfile, useUpdateUserProfile } from "@/hooks/useUserProfile"
 import { ProfileCompletionModal } from "@/components/ui-custom/ProfileCompletionModal"
 import { ProfileManager } from "@/components/ui-custom/ProfileManager"
+import { QuizSection } from "@/components/quiz/QuizSection"
 
 import {calculateTimeAgo , addHours} from "@/services/helpers.js"
 import { Skeleton } from "@/components/ui/skeleton";
@@ -99,6 +100,7 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showAllRecentChats, setShowAllRecentChats] = useState(false);
   
 
   const { userId, isLoaded } = useAuth();
@@ -255,7 +257,7 @@ const Dashboard = () => {
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                       <Plus className="h-6 w-6 text-primary" />
                     </div>
-                    <div>
+                    <div className="text-left">
                       <h3 className="font-semibold text-lg">New Chat</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         Start a fresh conversation with Es3af
@@ -265,36 +267,56 @@ const Dashboard = () => {
                 </Card>
               </Link>
               
-              <Link to="/chat/history">
-                <Card className="hover:shadow-md transition-shadow hover:border-primary/20">
+              <button 
+                onClick={() => {
+                  const quizSection = document.getElementById('quiz-section');
+                  if (quizSection) {
+                    const elementPosition = quizSection.offsetTop;
+                    const offsetPosition = elementPosition - 100; // 100px offset from top
+                    window.scrollTo({
+                      top: offsetPosition,
+                      behavior: 'smooth'
+                    });
+                  }
+                }}
+                className="w-full"
+              >
+                <Card className="hover:shadow-md transition-shadow hover:border-primary/20 relative overflow-hidden">
+                  <div className="absolute top-2 right-2">
+                    <Badge variant="default" className="text-xs bg-primary text-primary-foreground">
+                      New
+                    </Badge>
+                  </div>
                   <CardContent className="p-6 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Clock className="h-6 w-6 text-primary" />
+                      <Brain className="h-6 w-6 text-primary" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-lg">Chat History</h3>
+                    <div className="text-left">
+                      <h3 className="font-semibold text-lg">AI Quiz Generator</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        View your previous conversations
+                        Create quizzes from your study materials
                       </p>
                     </div>
                   </CardContent>
                 </Card>
-              </Link>
+              </button>
             </div>
             
             <Tabs defaultValue="recent" className="w-full">
-              <TabsList className="mb-6">
-                <TabsTrigger value="recent">Recent Chats</TabsTrigger>
-                <TabsTrigger value="topics">Suggested Topics</TabsTrigger>
-                <TabsTrigger value="favorites">Favorites</TabsTrigger>
-                <TabsTrigger value="profile">Profile</TabsTrigger>
-              </TabsList>
+              <div className="overflow-x-auto">
+                <TabsList className="mb-6 w-max min-w-full">
+                  <TabsTrigger value="recent" className="whitespace-nowrap">Recent Chats</TabsTrigger>
+                  <TabsTrigger value="topics" className="whitespace-nowrap">Suggested Topics</TabsTrigger>
+                  <TabsTrigger value="favorites" className="whitespace-nowrap">Favorites</TabsTrigger>
+                  <TabsTrigger value="profile" className="whitespace-nowrap">Profile</TabsTrigger>
+                </TabsList>
+              </div>
               
               <TabsContent value="recent" className="space-y-4">
               {isLoadingUserChats  ? (
                   // Skeleton loading for topics
                   <div className="grid grid-cols-1 gap-4">
-                    {Array.from({ length: 4 }).map((_, index) => (
+                    {Array.from({ length: 2 }).map((_, index) => (
                       <Card key={index} className="futuristic-card overflow-hidden border-0 h-full">
                         <CardContent className="p-6 flex items-start gap-4 h-full">
                           <div className="w-full">
@@ -309,31 +331,55 @@ const Dashboard = () => {
                 ) :
 
               userChats?.length > 0 ? (
-                  userChats?.map((chat) => (
-                    <Link to={`/chat/${chat.id}`} key={chat.id}>
-                      <Card className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-6">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <h3 className="font-semibold text-lg">{chat.title}</h3>
-                              {chat?.category &&                              
-                               <Badge variant="outline" className="mt-1">
-                                {chat.category}
-                              </Badge>
-                              }
+                  <>
+                    {(showAllRecentChats ? userChats : userChats?.slice(0, 2) || []).map((chat) => (
+                      <Link to={`/chat/${chat.id}`} key={chat.id}>
+                        <Card className="hover:shadow-md transition-shadow">
+                          <CardContent className="p-6">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h3 className="font-semibold text-lg">{chat.title}</h3>
+                                {chat?.category &&                              
+                                 <Badge variant="outline" className="mt-1">
+                                  {chat.category}
+                                </Badge>
+                                }
 
+                              </div>
+                              <span className="text-xs text-gray-500">{calculateTimeAgo(addHours(chat.created_at , 2))}</span>
                             </div>
-                            <span className="text-xs text-gray-500">{calculateTimeAgo(addHours(chat.created_at , 2))}</span>
-                          </div>
-                          {chat.first_prompt && 
-                          <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2">
-                            {chat.first_prompt}
-                          </p>
-                          }
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))
+                            {chat.first_prompt && 
+                            <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2">
+                              {chat.first_prompt}
+                            </p>
+                            }
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                    {userChats.length > 2 && !showAllRecentChats && (
+                      <div className="text-center py-4">
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => setShowAllRecentChats(true)}
+                        >
+                          View All Chats ({userChats.length - 2} more)
+                        </Button>
+                      </div>
+                    )}
+                    {showAllRecentChats && userChats.length > 2 && (
+                      <div className="text-center py-4">
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => setShowAllRecentChats(false)}
+                        >
+                          Show Less
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 ) : !isLoadingUserChats && (!userChats?.length) && (
                   <div className="text-center py-12">
                     <p className="text-gray-500 dark:text-gray-400">No recent chats yet</p>
@@ -452,6 +498,11 @@ const Dashboard = () => {
 
               
             </Tabs>
+
+            {/* Quiz Section - Now outside tabs */}
+            <div id="quiz-section" className="mt-8">
+              <QuizSection />
+            </div>
           </div>
         </main>
       </div>

@@ -380,7 +380,7 @@ const Chat = () => {
         {/* Main Content */}
         <main className={`flex-1 transition-all duration-300 flex flex-col ${isMobile ? "w-full" : "md:ml-72"}`}>
           {/* Chat header */}
-          <div className="border-b border-border px-4 py-3 flex items-center justify-between bg-background">
+          <div className="sticky top-14 z-10 border-b border-border px-4 py-3 flex items-center justify-between bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 
 
 
