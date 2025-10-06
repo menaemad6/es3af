@@ -34,7 +34,9 @@ export interface Quiz {
   recommendedTime?: number; // in minutes
   createdAt: Date;
   completedAt?: Date;
-  result?: QuizResult;
+  result?: QuizResult; // Latest attempt (for backward compatibility)
+  attempts?: QuizResult[]; // All attempts history
+  user_id?: string; // Added for database compatibility
 }
 
 export interface QuizCreationData {

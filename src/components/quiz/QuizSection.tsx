@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,13 +20,15 @@ import {
   Zap,
   Brain,
   Award,
-  TrendingUp
+  TrendingUp,
+  BarChart3
 } from 'lucide-react';
 import { QuizCreationForm } from './QuizCreationForm';
 import { QuizModal } from './QuizModal';
 import { useQuizGeneration } from '@/hooks/useQuizGeneration';
-import { useQuizStorage } from '@/hooks/useQuizStorage';
+import { useQuiz } from '@/hooks/useQuiz';
 import { QuizCreationData, Quiz, QuizResult } from '@/types/quiz';
+import { useAuth } from '@clerk/clerk-react';
 import { toast } from 'sonner';
 
 export function QuizSection() {
@@ -38,19 +41,28 @@ export function QuizSection() {
     questionsPerChunk: 8, // Reduced for faster processing
     maxChunkSize: 3000, // Smaller chunks for faster processing
     temperature: 0.3,
-    maxTokens: 2000 // Reduced token usage
+    maxTokens: 4000 // Increased token limit for better responses
   });
   
   const [isProcessingPDF, setIsProcessingPDF] = useState(false);
+  
+  // Get userId from Clerk authentication
+  const { userId, isLoaded } = useAuth();
+  
   const {
     quizzes,
-    saveQuiz,
+    createQuiz,
     deleteQuiz,
-    getCompletedQuizzes,
-    getIncompleteQuizzes
-  } = useQuizStorage();
+    completeQuizAttempt,
+    getQuizById
+  } = useQuiz({ userId: userId || undefined });
 
   const handleCreateQuiz = async (data: QuizCreationData) => {
+    if (!userId) {
+      toast.error('You must be logged in to create quizzes');
+      return;
+    }
+
     try {
       // Set processing state for PDF files
       if (data.sourceType === 'pdf' && data.pdfFile) {
@@ -61,18 +73,15 @@ export function QuizSection() {
       const result = await generateQuizQuestions(data);
       
       if (result.success && result.questions) {
-        const newQuiz: Quiz = {
-          id: `quiz_${Date.now()}`,
+        const newQuiz = await createQuiz({
           title: result.title || 'Generated Quiz',
           description: result.description || 'Test your knowledge with this AI-generated quiz',
           source: data.source,
           sourceType: data.sourceType,
           questions: result.questions,
           recommendedTime: result.recommendedTime || 15,
-          createdAt: new Date()
-        };
-
-        saveQuiz(newQuiz);
+          user_id: userId
+        });
         setShowCreationForm(false);
         
         // Show different success messages based on extraction method
@@ -106,51 +115,69 @@ export function QuizSection() {
     // Don't start the quiz yet - wait for user to click start in the modal
   };
 
+  const handleReviewQuiz = (quiz: Quiz) => {
+    setSelectedQuiz(quiz);
+    setShowQuizModal(true);
+    // This will open the modal in attempts mode to show all attempts
+  };
+
   const handleRetakeQuiz = (quiz: Quiz) => {
     setShowRetakeConfirmation(quiz);
   };
 
   const confirmRetakeQuiz = () => {
     if (showRetakeConfirmation) {
-      // Reset the quiz result to allow retaking
+      console.log('Retaking quiz:', showRetakeConfirmation);
+      console.log('Existing attempts:', showRetakeConfirmation.attempts);
+      
+      // For retake, we just need to clear the current result
+      // The attempts history is preserved in the database
       const updatedQuiz = {
         ...showRetakeConfirmation,
-        result: undefined,
-        completedAt: undefined
+        result: undefined, // Clear current result for new attempt
+        completedAt: undefined, // Clear completion date
+        // attempts are preserved in the database, no need to modify them here
       };
-      saveQuiz(updatedQuiz);
+      
+      console.log('Updated quiz for retake:', updatedQuiz);
+      
       setShowRetakeConfirmation(null);
       
       // Close modal first
       setSelectedQuiz(null);
       setShowQuizModal(false);
       
-      // Then open the modal with the reset quiz
+      // Then open the modal with the updated quiz
       setTimeout(() => {
         setSelectedQuiz(updatedQuiz);
         setShowQuizModal(true);
       }, 100);
       
-      toast.success('Quiz reset! Starting fresh attempt.');
+      toast.success('Starting fresh attempt. Previous attempts preserved.');
     }
   };
 
-  const handleCompleteQuiz = (result: QuizResult) => {
-    // Update the quiz with the result
-    if (selectedQuiz) {
-      const updatedQuiz = {
-        ...selectedQuiz,
-        result,
-        completedAt: new Date()
-      };
-      saveQuiz(updatedQuiz);
-    }
+  const handleCompleteQuiz = async (result: QuizResult) => {
+    // Debug logging
+    console.log('Quiz completed with result:', result);
+    console.log('Result answers:', result.answers);
+    console.log('Correct answers count:', result.correctAnswers);
+    console.log('Total questions:', result.totalQuestions);
+    console.log('Score:', result.score);
+    
+    // TODO: Implement quiz attempt completion
+    // This will need to be updated when we implement the quiz attempt flow
     toast.success(`Quiz completed! Score: ${result.score}%`);
   };
 
-  const handleDeleteQuiz = (quizId: string) => {
+  const handleDeleteQuiz = async (quizId: string) => {
+    if (!userId) {
+      toast.error('You must be logged in to delete quizzes');
+      return;
+    }
+
     if (confirm('Are you sure you want to delete this quiz?')) {
-      deleteQuiz(quizId);
+      await deleteQuiz(quizId);
       toast.success('Quiz deleted successfully');
     }
   };
@@ -169,8 +196,58 @@ export function QuizSection() {
     return 'text-red-600';
   };
 
-  const completedQuizzes = getCompletedQuizzes();
-  const incompleteQuizzes = getIncompleteQuizzes();
+  const completedQuizzes = quizzes.filter(q => q.completedAt);
+  const incompleteQuizzes = quizzes.filter(q => !q.completedAt);
+
+  // Show loading state while authentication is loading
+  if (!isLoaded) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <FileText className="h-6 w-6" />
+              Source to Quiz
+            </h2>
+            <p className="text-muted-foreground">
+              Loading...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show authentication required message if user is not logged in
+  if (!userId) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <FileText className="h-6 w-6" />
+              Source to Quiz
+            </h2>
+            <p className="text-muted-foreground">
+              Please log in to access quiz features
+            </p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="p-12 text-center">
+            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Authentication Required</h3>
+            <p className="text-muted-foreground mb-4">
+              You need to be logged in to create and manage quizzes.
+            </p>
+            <Button asChild>
+              <Link to="/login">Sign In</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -366,17 +443,16 @@ export function QuizSection() {
                         )}
                       </div>
                       
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteQuiz(quiz.id)}
-                          className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <div className="flex items-center gap-2"></div>
                     </div>
+                    {/* Always-visible delete button at top-right */}
+                    <button
+                      onClick={() => handleDeleteQuiz(quiz.id)}
+                      className="absolute top-2 right-2 p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
+                      aria-label="Delete quiz"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
 
                     {/* Quiz Stats and Actions */}
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -435,7 +511,7 @@ export function QuizSection() {
                               </Button>
                               <Button
                                 variant="outline"
-                                onClick={() => handleStartQuiz(quiz)}
+                                onClick={() => handleReviewQuiz(quiz)}
                                 className="flex-1 sm:flex-none"
                               >
                                 <Play className="h-4 w-4 mr-2" />
@@ -509,6 +585,22 @@ export function QuizSection() {
                   <span>{showRetakeConfirmation.result?.correctAnswers}/{showRetakeConfirmation.result?.totalQuestions} correct</span>
                   <span>{showRetakeConfirmation.result?.timeSpent && Math.floor(showRetakeConfirmation.result.timeSpent / 60)}m {showRetakeConfirmation.result?.timeSpent && showRetakeConfirmation.result.timeSpent % 60}s</span>
                 </div>
+              </div>
+              
+              {/* Review Answers Button */}
+              <div className="mt-4">
+                <Button 
+                  onClick={() => {
+                    setShowRetakeConfirmation(null);
+                    setSelectedQuiz(showRetakeConfirmation);
+                    setShowQuizModal(true);
+                  }}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Review Previous Answers
+                </Button>
               </div>
             </div>
           )}

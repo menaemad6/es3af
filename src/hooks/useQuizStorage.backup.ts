@@ -1,3 +1,7 @@
+// BACKUP: This file contains the old localStorage-based quiz storage logic
+// This file is kept as a backup during the migration to database-driven storage
+// It can be deleted once the migration is complete and tested
+
 import { useState, useEffect, useCallback } from 'react';
 import { Quiz, QuizState, QuizStorage, QuizResult, QuizAnswer } from '@/types/quiz';
 
@@ -51,7 +55,11 @@ export function useQuizStorage() {
           result: quiz.result ? {
             ...quiz.result,
             completedAt: new Date(quiz.result.completedAt)
-          } : undefined
+          } : undefined,
+          attempts: quiz.attempts ? quiz.attempts.map((attempt: QuizResult) => ({
+            ...attempt,
+            completedAt: new Date(attempt.completedAt)
+          })) : []
         }));
         setStorage(parsedStorage);
       }
@@ -70,10 +78,53 @@ export function useQuizStorage() {
   }, [storage]);
 
   const saveQuiz = useCallback((quiz: Quiz) => {
-    setStorage(prev => ({
-      ...prev,
-      quizzes: [quiz, ...prev.quizzes.filter(q => q.id !== quiz.id)]
-    }));
+    setStorage(prev => {
+      const existingQuiz = prev.quizzes.find(q => q.id === quiz.id);
+      
+      console.log('Saving quiz:', quiz);
+      console.log('Existing quiz:', existingQuiz);
+      console.log('Quiz has result:', !!quiz.result);
+      
+      if (existingQuiz && quiz.result) {
+        // If this is a new attempt with a result, add it to the attempts array
+        const updatedQuiz: Quiz = {
+          ...quiz,
+          attempts: [
+            quiz.result,
+            ...(existingQuiz.attempts || [])
+          ]
+        };
+        
+        console.log('Adding new attempt. Updated quiz:', updatedQuiz);
+        
+        return {
+          ...prev,
+          quizzes: [updatedQuiz, ...prev.quizzes.filter(q => q.id !== quiz.id)]
+        };
+      } else if (existingQuiz && !quiz.result) {
+        // If this is a retake (no result yet), preserve existing attempts
+        const updatedQuiz: Quiz = {
+          ...quiz,
+          attempts: quiz.attempts || existingQuiz.attempts || [] // Use quiz attempts first, then existing
+        };
+        
+        console.log('Retaking quiz. Preserving attempts:', updatedQuiz);
+        console.log('Quiz attempts:', quiz.attempts);
+        console.log('Existing attempts:', existingQuiz.attempts);
+        
+        return {
+          ...prev,
+          quizzes: [updatedQuiz, ...prev.quizzes.filter(q => q.id !== quiz.id)]
+        };
+      } else {
+        // New quiz or quiz without result
+        console.log('New quiz or no existing quiz');
+        return {
+          ...prev,
+          quizzes: [quiz, ...prev.quizzes.filter(q => q.id !== quiz.id)]
+        };
+      }
+    });
   }, []);
 
   const deleteQuiz = useCallback((quizId: string) => {

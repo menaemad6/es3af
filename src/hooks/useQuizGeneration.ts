@@ -33,7 +33,7 @@ export function useQuizGeneration(options: UseQuizGenerationOptions = {}) {
 
   const { 
     temperature = 0.3, 
-    maxTokens = 2000, // Reduced token usage
+    maxTokens = 4000, // Increased token limit for better responses
     questionCount = 5,
     maxChunkSize = 3000, // Smaller chunks for faster processing
     questionsPerChunk = 8 // Reduced questions per chunk
@@ -70,7 +70,7 @@ export function useQuizGeneration(options: UseQuizGenerationOptions = {}) {
       }
     }
 
-    // Strategy 4: Try to fix common JSON issues
+    // Strategy 4: Try to fix common JSON issues and handle truncation
     let cleanedContent = responseContent
       .replace(/```json\s*/g, '')
       .replace(/```\s*/g, '')
@@ -83,13 +83,32 @@ export function useQuizGeneration(options: UseQuizGenerationOptions = {}) {
     // Fix unescaped quotes in strings
     cleanedContent = cleanedContent.replace(/"([^"]*)"([^"]*)"([^"]*)":/g, '"$1\\"$2\\"$3":');
 
+    // Strategy 5: Handle truncated JSON by attempting to complete it
+    if (cleanedContent.includes('"correct') && !cleanedContent.endsWith('}')) {
+      // Try to find the last complete question and truncate there
+      const lastCompleteQuestion = cleanedContent.lastIndexOf('},');
+      if (lastCompleteQuestion > 0) {
+        cleanedContent = cleanedContent.substring(0, lastCompleteQuestion + 1) + ']';
+        // Try to close the JSON structure
+        if (cleanedContent.includes('"questions": [')) {
+          const questionsStart = cleanedContent.indexOf('"questions": [');
+          const beforeQuestions = cleanedContent.substring(0, questionsStart);
+          const questionsPart = cleanedContent.substring(questionsStart);
+          const lastCompleteQuestionInPart = questionsPart.lastIndexOf('},');
+          if (lastCompleteQuestionInPart > 0) {
+            cleanedContent = beforeQuestions + questionsPart.substring(0, lastCompleteQuestionInPart + 1) + ']}';
+          }
+        }
+      }
+    }
+
     try {
       return JSON.parse(cleanedContent);
     } catch (e) {
       console.warn('Cleaned JSON parse failed');
     }
 
-    // Strategy 5: Try to extract questions array directly
+    // Strategy 6: Try to extract questions array directly
     const questionsMatch = responseContent.match(/questions\s*:\s*\[([\s\S]*?)\]/);
     if (questionsMatch) {
       try {
@@ -100,7 +119,157 @@ export function useQuizGeneration(options: UseQuizGenerationOptions = {}) {
       }
     }
 
+    // Strategy 7: Handle truncated JSON by attempting to reconstruct it
+    if (responseContent.includes('"questions": [') && responseContent.includes('"correct')) {
+      try {
+        // Extract the questions array even if truncated
+        const questionsStart = responseContent.indexOf('"questions": [');
+        const questionsEnd = responseContent.lastIndexOf('}');
+        
+        if (questionsStart !== -1 && questionsEnd !== -1) {
+          const questionsPart = responseContent.substring(questionsStart + 13, questionsEnd + 1);
+          
+          // Try to find complete question objects by counting braces
+          const questions = [];
+          let braceCount = 0;
+          let currentQuestion = '';
+          let inString = false;
+          let escapeNext = false;
+          
+          for (let i = 0; i < questionsPart.length; i++) {
+            const char = questionsPart[i];
+            
+            if (escapeNext) {
+              escapeNext = false;
+              currentQuestion += char;
+              continue;
+            }
+            
+            if (char === '\\') {
+              escapeNext = true;
+              currentQuestion += char;
+              continue;
+            }
+            
+            if (char === '"' && !escapeNext) {
+              inString = !inString;
+            }
+            
+            if (!inString) {
+              if (char === '{') {
+                braceCount++;
+              } else if (char === '}') {
+                braceCount--;
+              }
+            }
+            
+            currentQuestion += char;
+            
+            // If we've closed a complete question object
+            if (braceCount === 0 && currentQuestion.trim().startsWith('{')) {
+              try {
+                const parsed = JSON.parse(currentQuestion.trim());
+                if (parsed.id && parsed.question && parsed.options && parsed.correctAnswer) {
+                  questions.push(parsed);
+                }
+              } catch (e) {
+                // Skip malformed questions
+              }
+              currentQuestion = '';
+            }
+          }
+          
+          if (questions.length > 0) {
+            return { questions };
+          }
+        }
+      } catch (e) {
+        console.warn('Truncated JSON reconstruction failed');
+      }
+    }
+
     throw new Error(`Failed to parse AI response. Content preview: ${responseContent.substring(0, 200)}...`);
+  }, []);
+
+  /**
+   * Normalize various forms of correctAnswer into a single uppercase letter (A-F)
+   * Ensures the letter maps to an existing option index
+   */
+  const normalizeCorrectAnswer = useCallback((rawCorrect: unknown, options: unknown[]): string | null => {
+    if (!rawCorrect || !Array.isArray(options) || options.length === 0) return null;
+
+    const text = String(rawCorrect).trim();
+
+    // 1) Direct letter (A-F)
+    const directLetterMatch = text.match(/^([A-Fa-f])\b/);
+    if (directLetterMatch) {
+      const letter = directLetterMatch[1].toUpperCase();
+      const idx = letter.charCodeAt(0) - 65; // A->0
+      return idx >= 0 && idx < options.length ? letter : null;
+    }
+
+    // 2) Number 1-6 (1-based)
+    const numberMatch = text.match(/^(?:Option\s*)?(\d)\b/gi);
+    if (numberMatch) {
+      const num = parseInt(numberMatch[0].replace(/[^0-9]/g, ''), 10);
+      if (!Number.isNaN(num)) {
+        const idx = num - 1;
+        if (idx >= 0 && idx < options.length) {
+          return String.fromCharCode(65 + idx);
+        }
+      }
+    }
+
+    // 3) Patterns like "Option B", "option c)"
+    const optionLetterMatch = text.match(/^option\s*([A-Fa-f])\b\)?/i);
+    if (optionLetterMatch) {
+      const letter = optionLetterMatch[1].toUpperCase();
+      const idx = letter.charCodeAt(0) - 65;
+      return idx >= 0 && idx < options.length ? letter : null;
+    }
+
+    // 4) Patterns like "B)" or "b."
+    const prefixedLetterMatch = text.match(/^([A-Fa-f])[).]?/);
+    if (prefixedLetterMatch) {
+      const letter = prefixedLetterMatch[1].toUpperCase();
+      const idx = letter.charCodeAt(0) - 65;
+      return idx >= 0 && idx < options.length ? letter : null;
+    }
+
+    // 5) Exact option text match -> map to index
+    const normalizedOptions = options.map(o => String(o).trim());
+    const byExactTextIdx = normalizedOptions.findIndex(o => o === text);
+    if (byExactTextIdx >= 0) {
+      return String.fromCharCode(65 + byExactTextIdx);
+    }
+
+    // 6) Case-insensitive contains (best-effort, avoid if ambiguous)
+    const lowerText = text.toLowerCase();
+    const candidates = normalizedOptions
+      .map((o, i) => ({ i, o: o.toLowerCase() }))
+      .filter(({ o }) => o === lowerText || o.includes(lowerText));
+    if (candidates.length === 1) {
+      return String.fromCharCode(65 + candidates[0].i);
+    }
+
+    return null;
+  }, []);
+
+  /**
+   * Sanitize options by stripping any leading labels like "A)", "B.", "1)" etc.
+   */
+  const sanitizeOptions = useCallback((options: unknown[]): string[] => {
+    if (!Array.isArray(options)) return [];
+    return options.map((opt) => {
+      const text = String(opt);
+      // Remove leading patterns: "A) ", "A. ", "A - ", "1) ", "1. "
+      return text.replace(/^\s*([A-Fa-f]|\d{1,2})[).-]\s+/, '').trim();
+    });
+  }, []);
+
+  // Ensure each question has a unique sequential id for consistent mapping
+  const assignSequentialIds = useCallback((questions: QuizQuestion[]): QuizQuestion[] => {
+    return questions.map((q, idx) => ({ ...q, id: `q_${idx + 1}` }));
   }, []);
 
   /**
@@ -303,30 +472,36 @@ Generate an engaging title and description for a quiz based on this medical cont
         const systemPrompt = isNonMedical 
           ? `Create ${questionsToGenerate} multiple-choice questions from the source material.
 
+CRITICAL: You MUST respond with valid JSON only. No additional text before or after the JSON.
+
 Rules:
 - 4 options per question (A, B, C, D)
 - Test different concepts, no duplicates
 - Clear, unambiguous questions
 - One correct answer per question
-- Include title, description, and questions in JSON format
+- correctAnswer MUST be a single uppercase letter among A, B, C, or D
+- The options array MUST contain only the option texts, without any leading letters (no "A)" / "B." prefixes)
+- Keep explanations concise to avoid truncation
+- Respond with ONLY the JSON object below
 
-JSON format:
 {
   "title": "Quiz Title",
-  "description": "Quiz description",
+  "description": "Quiz description", 
   "recommendedTime": 15,
   "questions": [
     {
       "id": "q1",
       "question": "Question text?",
-      "options": ["A", "B", "C", "D"],
+      "options": ["Option A", "Option B", "Option C", "Option D"],
       "correctAnswer": "A",
-      "explanation": "Why A is correct",
+      "explanation": "Brief explanation",
       "points": 1
     }
   ]
 }`
           : `Create ${questionsToGenerate} medical multiple-choice questions from the source material.
+
+CRITICAL: You MUST respond with valid JSON only. No additional text before or after the JSON.
 
 Rules:
 - 4 options per question (A, B, C, D)
@@ -334,9 +509,11 @@ Rules:
 - Use appropriate medical terminology
 - Clear, unambiguous questions
 - One correct answer per question
-- Include title, description, and questions in JSON format
+- correctAnswer MUST be a single uppercase letter among A, B, C, or D
+- The options array MUST contain only the option texts, without any leading letters (no "A)" / "B." prefixes)
+- Keep explanations concise to avoid truncation
+- Respond with ONLY the JSON object below
 
-JSON format:
 {
   "title": "Medical Quiz Title",
   "description": "Quiz description",
@@ -345,9 +522,9 @@ JSON format:
     {
       "id": "q1",
       "question": "Question text?",
-      "options": ["A", "B", "C", "D"],
+      "options": ["Option A", "Option B", "Option C", "Option D"],
       "correctAnswer": "A",
-      "explanation": "Why A is correct",
+      "explanation": "Brief explanation",
       "points": 1
     }
   ]
@@ -400,16 +577,34 @@ Create ${questionsToGenerate} medical questions covering key concepts.`;
             const q = parsedResponse.questions[i];
             // More flexible validation - allow 3-6 options instead of exactly 4
             if (q.question && q.options && Array.isArray(q.options) && q.options.length >= 3 && q.options.length <= 6 && q.correctAnswer) {
-              questions.push({
-                id: q.id || `q_${i + 1}`,
-                question: q.question.trim(),
-                options: q.options.map(opt => String(opt).trim()),
-                correctAnswer: String(q.correctAnswer).trim(),
-                explanation: q.explanation ? String(q.explanation).trim() : '',
-                points: typeof q.points === 'number' ? q.points : 1
-              });
+              // Clean options and normalize correct answer against them
+              const cleanedOptions = sanitizeOptions(q.options);
+              const normalizedLetter = normalizeCorrectAnswer(q.correctAnswer, cleanedOptions);
+              if (normalizedLetter) {
+                questions.push({
+                  id: q.id || `q_${i + 1}`,
+                  question: q.question.trim(),
+                  options: cleanedOptions,
+                  correctAnswer: normalizedLetter,
+                  explanation: q.explanation ? String(q.explanation).trim() : '',
+                  points: typeof q.points === 'number' ? q.points : 1
+                });
+              } else {
+                console.warn(`Invalid correctAnswer for question ${i + 1}:`, {
+                  correctAnswer: q.correctAnswer,
+                  options: cleanedOptions,
+                  question: q
+                });
+              }
             } else {
-              console.warn(`Skipping invalid question ${i + 1}:`, q);
+              console.warn(`Skipping invalid question ${i + 1}:`, {
+                hasQuestion: !!q.question,
+                hasOptions: !!q.options,
+                optionsLength: q.options?.length,
+                hasCorrectAnswer: !!q.correctAnswer,
+                correctAnswerValue: q.correctAnswer,
+                question: q
+              });
             }
           }
         }
@@ -421,6 +616,9 @@ Create ${questionsToGenerate} medical questions covering key concepts.`;
           };
         }
 
+        // Reassign sequential unique IDs to avoid collisions
+        const finalQuestions = assignSequentialIds(questions);
+
         setProgress({
           stage: 'finalizing',
           message: 'Finalizing quiz details...',
@@ -428,12 +626,12 @@ Create ${questionsToGenerate} medical questions covering key concepts.`;
         });
 
         // Calculate time based on question count (2 minutes per question)
-        const calculatedTime = Math.max(5, questions.length * 2); // Minimum 5 minutes, 2 minutes per question
+        const calculatedTime = Math.max(5, finalQuestions.length * 2); // Minimum 5 minutes, 2 minutes per question
 
-        console.log(`Single chunk result: ${questions.length} questions generated`);
+        console.log(`Single chunk result: ${finalQuestions.length} questions generated`);
         return {
           success: true,
-          questions,
+          questions: finalQuestions,
           title: parsedResponse.title || (isNonMedical ? 'Knowledge Quiz' : 'Medical Knowledge Quiz'),
           description: parsedResponse.description || (isNonMedical ? 'Test your understanding of the concepts with this comprehensive quiz.' : 'Test your understanding of medical concepts with this comprehensive quiz.'),
           recommendedTime: calculatedTime,
@@ -464,11 +662,15 @@ Create ${questionsToGenerate} medical questions covering key concepts.`;
           const systemPrompt = isNonMedical
             ? `Create ${questionsPerChunk} multiple-choice questions from the text.
 
+CRITICAL: You MUST respond with valid JSON only. No additional text before or after the JSON.
+
 Rules:
 - 4 options per question (A, B, C, D)
 - Test different concepts, no duplicates
 - Clear, unambiguous questions
 - One correct answer per question
+- correctAnswer MUST be a single uppercase letter among A, B, C, or D
+- The options array MUST contain only the option texts, without any leading letters (no "A)" / "B." prefixes)
 
 JSON format:
 {
@@ -485,12 +687,16 @@ JSON format:
 }`
             : `Create ${questionsPerChunk} medical multiple-choice questions from the text.
 
+CRITICAL: You MUST respond with valid JSON only. No additional text before or after the JSON.
+
 Rules:
 - 4 options per question (A, B, C, D)
 - Test different medical concepts, no duplicates
 - Use appropriate medical terminology
 - Clear, unambiguous questions
 - One correct answer per question
+- correctAnswer MUST be a single uppercase letter among A, B, C, or D
+- The options array MUST contain only the option texts, without any leading letters (no "A)" / "B." prefixes)
 
 JSON format:
 {
@@ -550,14 +756,25 @@ Create ${questionsPerChunk} medical questions covering key concepts.`;
               for (let j = 0; j < parsedResponse.questions.length; j++) {
                 const q = parsedResponse.questions[j];
                 if (q.question && q.options && Array.isArray(q.options) && q.options.length >= 3 && q.options.length <= 6 && q.correctAnswer) {
-                  chunkQuestions.push({
-                    id: q.id || `q_${i + 1}_${j + 1}`,
-                    question: q.question.trim(),
-                    options: q.options.map(opt => String(opt).trim()),
-                    correctAnswer: String(q.correctAnswer).trim(),
-                    explanation: q.explanation ? String(q.explanation).trim() : '',
-                    points: typeof q.points === 'number' ? q.points : 1
-                  });
+                  // Clean options and normalize answer
+                  const cleanedOptions = sanitizeOptions(q.options);
+                  const normalizedLetter = normalizeCorrectAnswer(q.correctAnswer, cleanedOptions);
+                  if (normalizedLetter) {
+                    chunkQuestions.push({
+                      id: q.id || `q_${i + 1}_${j + 1}`,
+                      question: q.question.trim(),
+                      options: cleanedOptions,
+                      correctAnswer: normalizedLetter, // Always uppercase letter aligned to options
+                      explanation: q.explanation ? String(q.explanation).trim() : '',
+                      points: typeof q.points === 'number' ? q.points : 1
+                    });
+                  } else {
+                    console.warn(`Invalid correctAnswer for chunk question ${i + 1}_${j + 1}:`, {
+                      correctAnswer: q.correctAnswer,
+                      options: cleanedOptions,
+                      question: q
+                    });
+                  }
                 }
               }
             }
@@ -595,12 +812,15 @@ Create ${questionsPerChunk} medical questions covering key concepts.`;
           };
         }
 
+        // Assign sequential IDs after deduplication to avoid collisions from model-provided IDs
+        const finalQuestions = assignSequentialIds(uniqueQuestions);
+
         // Calculate time based on final question count (2 minutes per question)
-        const finalCalculatedTime = Math.max(5, uniqueQuestions.length * 2); // Minimum 5 minutes, 2 minutes per question
+        const finalCalculatedTime = Math.max(5, finalQuestions.length * 2); // Minimum 5 minutes, 2 minutes per question
 
         return {
           success: true,
-          questions: uniqueQuestions,
+          questions: finalQuestions,
           title: quizTitle,
           description: quizDescription,
           recommendedTime: finalCalculatedTime,
@@ -619,7 +839,7 @@ Create ${questionsPerChunk} medical questions covering key concepts.`;
     } finally {
       setIsGenerating(false);
     }
-  }, [temperature, maxTokens, questionCount, maxChunkSize, questionsPerChunk, removeDuplicateQuestions, parseAIResponse, generateTitleAndDescription]);
+  }, [temperature, maxTokens, questionCount, maxChunkSize, questionsPerChunk, removeDuplicateQuestions, parseAIResponse, generateTitleAndDescription, sanitizeOptions, normalizeCorrectAnswer, assignSequentialIds]);
 
   return {
     generateQuizQuestions,
