@@ -7,7 +7,8 @@ import * as pdfjsLib from 'pdfjs-dist'
 import defaultWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 
 // Dynamic import for Tesseract.js to avoid build issues
-let Tesseract: any = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let Tesseract: { recognize: (blob: Blob, lang: string, options?: { logger?: (m: any) => void; ocr?: any }) => Promise<{ data: { text: string } }> } | null = null;
 
 /**
  * Dynamically loads Tesseract.js to avoid build issues
@@ -96,13 +97,18 @@ async function extractTextFromCanvas(canvas: HTMLCanvasElement): Promise<string>
 		// Load Tesseract.js dynamically
 		const TesseractLib = await loadTesseract();
 		
-		// Perform OCR using Tesseract.js with optimized settings for medical text
+		// Perform OCR using Tesseract.js with optimized settings for faster processing
 		const { data: { text } } = await TesseractLib.recognize(blob, 'eng', {
 			logger: (m) => {
 				// Only log progress for debugging, not every message
 				if (m.status === 'recognizing text') {
 					console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`)
 				}
+			},
+			// Optimize for speed
+			ocr: {
+				psm: 3, // Fully automatic page segmentation
+				tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,;:!?()[]{}"\'\\-+=/@#$%^&*|<>~` '
 			}
 		})
 		
@@ -114,7 +120,7 @@ async function extractTextFromCanvas(canvas: HTMLCanvasElement): Promise<string>
 		cleanedText = cleanedText.replace(/\n\s*\n/g, '\n\n')
 		
 		// Remove common OCR artifacts
-		cleanedText = cleanedText.replace(/[^\w\s.,;:!?()\[\]{}'"\-+=/\\@#$%^&*|<>~`]/g, '')
+		cleanedText = cleanedText.replace(/[^\w\s.,;:!?()[\]{}'"\-+=/\\@#$%^&*|<>~`]/g, '')
 		
 		return cleanedText
 	} catch (error) {
@@ -132,9 +138,9 @@ async function extractTextWithOCR(pdf: pdfjsLib.PDFDocumentProxy, fileInfo: { na
 		let extractedText = ''
 		const totalPages = pdf.numPages
 		
-		// Process pages in batches to avoid memory issues
-		// Use smaller batch size for better performance and memory management
-		const batchSize = 2
+		// Process pages in parallel for better performance
+		// Use larger batch size for faster processing
+		const batchSize = Math.min(4, totalPages) // Process up to 4 pages at once
 		for (let i = 1; i <= totalPages; i += batchSize) {
 			const endPage = Math.min(i + batchSize - 1, totalPages)
 			console.log(`Processing pages ${i}-${endPage} of ${totalPages} with OCR...`)
@@ -143,8 +149,8 @@ async function extractTextWithOCR(pdf: pdfjsLib.PDFDocumentProxy, fileInfo: { na
 			for (let pageNum = i; pageNum <= endPage; pageNum++) {
 				pagePromises.push(
 					pdf.getPage(pageNum).then(async (page) => {
-						// Use 1.5x scale for better balance between speed and accuracy
-						const canvas = await pdfPageToCanvas(page, 1.5)
+						// Use 1.2x scale for faster processing with acceptable accuracy
+						const canvas = await pdfPageToCanvas(page, 1.2)
 						const pageText = await extractTextFromCanvas(canvas)
 						return pageText
 					})
@@ -154,9 +160,9 @@ async function extractTextWithOCR(pdf: pdfjsLib.PDFDocumentProxy, fileInfo: { na
 			const pageTexts = await Promise.all(pagePromises)
 			extractedText += pageTexts.join('\n\n')
 			
-			// Add small delay between batches to prevent overwhelming the browser
+			// Reduced delay between batches for faster processing
 			if (endPage < totalPages) {
-				await new Promise(resolve => setTimeout(resolve, 300))
+				await new Promise(resolve => setTimeout(resolve, 100))
 			}
 		}
 		

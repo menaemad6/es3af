@@ -25,13 +25,18 @@ interface QuizGenerationResult {
 export function useQuizGeneration(options: UseQuizGenerationOptions = {}) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{
+    stage: 'extracting' | 'analyzing' | 'generating' | 'finalizing';
+    message: string;
+    progress: number;
+  } | null>(null);
 
   const { 
     temperature = 0.3, 
-    maxTokens = 3000, 
+    maxTokens = 2000, // Reduced token usage
     questionCount = 5,
-    maxChunkSize = 5000, // Reduced default chunk size
-    questionsPerChunk = 12
+    maxChunkSize = 3000, // Smaller chunks for faster processing
+    questionsPerChunk = 8 // Reduced questions per chunk
   } = options;
 
   /**
@@ -101,13 +106,29 @@ export function useQuizGeneration(options: UseQuizGenerationOptions = {}) {
   /**
    * Generates title, description, and recommended time based on content
    */
-  const generateTitleAndDescription = useCallback(async (firstChunk: string, totalTextLength: number): Promise<{
+  const generateTitleAndDescription = useCallback(async (firstChunk: string, totalTextLength: number, isNonMedical: boolean = false): Promise<{
     title: string;
     description: string;
     recommendedTime: number;
   }> => {
     try {
-      const systemPrompt = `You are an expert educational content creator. Analyze the provided medical content and generate an engaging quiz title, description, and appropriate time limit.
+      const systemPrompt = isNonMedical 
+        ? `You are an expert educational content creator. Analyze the provided content and generate an engaging quiz title, description, and appropriate time limit.
+
+CRITICAL RULES:
+- Create a specific, engaging title that reflects the topic/content
+- Write a clear description explaining what the quiz covers
+- Time will be calculated automatically based on question count (2 minutes per question)
+- Use appropriate terminology for the subject matter
+- Make it sound professional and educational
+
+Format your response as JSON with this exact structure:
+{
+  "title": "Specific, engaging title based on the content",
+  "description": "Clear description of what the quiz covers and its educational value",
+  "recommendedTime": 15
+}`
+        : `You are an expert educational content creator. Analyze the provided medical content and generate an engaging quiz title, description, and appropriate time limit.
 
 CRITICAL RULES:
 - Create a specific, engaging title that reflects the medical topic/content
@@ -123,7 +144,12 @@ Format your response as JSON with this exact structure:
   "recommendedTime": 15
 }`;
 
-      const userPrompt = `MEDICAL CONTENT SAMPLE (${totalTextLength} total characters):
+      const userPrompt = isNonMedical
+        ? `CONTENT SAMPLE (${totalTextLength} total characters):
+${firstChunk}
+
+Generate an engaging title and description for a quiz based on this content. Time will be calculated automatically based on the number of questions generated.`
+        : `MEDICAL CONTENT SAMPLE (${totalTextLength} total characters):
 ${firstChunk}
 
 Generate an engaging title and description for a quiz based on this medical content. Time will be calculated automatically based on the number of questions generated.`;
@@ -156,16 +182,16 @@ Generate an engaging title and description for a quiz based on this medical cont
       const calculatedTime = 15; // Default fallback
 
       return {
-        title: parsedResponse.title || 'Medical Knowledge Quiz',
-        description: parsedResponse.description || 'Test your understanding of medical concepts with this comprehensive quiz.',
+        title: parsedResponse.title || (isNonMedical ? 'Knowledge Quiz' : 'Medical Knowledge Quiz'),
+        description: parsedResponse.description || (isNonMedical ? 'Test your understanding of the concepts with this comprehensive quiz.' : 'Test your understanding of medical concepts with this comprehensive quiz.'),
         recommendedTime: calculatedTime
       };
     } catch (error) {
       console.error('Failed to generate title and description:', error);
       // Fallback values - time will be calculated based on question count
       return {
-        title: 'Medical Knowledge Quiz',
-        description: 'Test your understanding of medical concepts with this comprehensive quiz.',
+        title: isNonMedical ? 'Knowledge Quiz' : 'Medical Knowledge Quiz',
+        description: isNonMedical ? 'Test your understanding of the concepts with this comprehensive quiz.' : 'Test your understanding of medical concepts with this comprehensive quiz.',
         recommendedTime: 15 // Will be recalculated based on actual question count
       };
     }
@@ -213,6 +239,7 @@ Generate an engaging title and description for a quiz based on this medical cont
   const generateQuizQuestions = useCallback(async (
     data: QuizCreationData
   ): Promise<QuizGenerationResult> => {
+    const isNonMedical = data.isNonMedical || false;
     setIsGenerating(true);
     setError(null);
 
@@ -222,6 +249,11 @@ Generate an engaging title and description for a quiz based on this medical cont
       // Extract text from PDF or use provided text
       let extractionMethod: 'pdfjs' | 'ocr' | undefined;
       if (data.sourceType === 'pdf' && data.pdfFile) {
+        setProgress({
+          stage: 'extracting',
+          message: 'Extracting text from PDF...',
+          progress: 10
+        });
         const pdfResult = await extractTextFromPDF(data.pdfFile);
         if (!pdfResult.success) {
           return {
@@ -232,6 +264,11 @@ Generate an engaging title and description for a quiz based on this medical cont
         sourceText = pdfResult.text;
         extractionMethod = pdfResult.method;
       } else {
+        setProgress({
+          stage: 'analyzing',
+          message: 'Processing source text...',
+          progress: 20
+        });
         sourceText = data.source;
         console.log(`Processing text input: ${sourceText.length} characters`);
       }
@@ -244,54 +281,85 @@ Generate an engaging title and description for a quiz based on this medical cont
       }
 
       // Check if we need to process in chunks
+      setProgress({
+        stage: 'analyzing',
+        message: 'Analyzing content structure...',
+        progress: 30
+      });
+      
       const chunks = splitTextIntoChunks(sourceText, maxChunkSize);
         console.log(`Text length: ${sourceText.length} characters, split into ${chunks.length} chunks`);
         console.log(`Max chunk size: ${maxChunkSize}, Questions per chunk: ${questionsPerChunk}`);
       
       if (chunks.length === 1) {
+        setProgress({
+          stage: 'generating',
+          message: 'Generating questions with AI...',
+          progress: 50
+        });
         // Single chunk - process normally but generate more questions
         const questionsToGenerate = Math.max(questionCount, 15); // Generate at least 15 questions for single chunks
         console.log(`Single chunk processing: generating ${questionsToGenerate} questions`);
-        const systemPrompt = `You are an expert educational content creator specializing in medical education. Your task is to create high-quality multiple-choice questions (MCQs) from the provided source material.
+        const systemPrompt = isNonMedical 
+          ? `Create ${questionsToGenerate} multiple-choice questions from the source material.
 
-CRITICAL RULES:
-- Create EXACTLY ${questionsToGenerate} comprehensive questions from this material
-- Generate questions on EVERY important concept, definition, process, and detail mentioned
-- NO DUPLICATE questions - each question must test a different concept
-- Cover ALL topics: definitions, procedures, symptoms, treatments, anatomy, physiology, pharmacology, etc.
-- Each question must have exactly 4 options (A, B, C, D)
-- Questions should test understanding, application, and critical thinking, not just memorization
-- Make questions challenging but fair
-- Ensure only one correct answer per question
-- Provide clear, unambiguous questions
-- Make incorrect options plausible but clearly distinguishable from the correct answer
-- Use medical terminology appropriately
-- Questions should be suitable for medical students
-- Generate a SPECIFIC, engaging title that reflects the medical topic/content
-- Write a clear description explaining what the quiz covers and its educational value
-- Time will be calculated automatically based on question count (2 minutes per question)
+Rules:
+- 4 options per question (A, B, C, D)
+- Test different concepts, no duplicates
+- Clear, unambiguous questions
+- One correct answer per question
+- Include title, description, and questions in JSON format
 
-Format your response as JSON with this exact structure:
+JSON format:
 {
-  "title": "Specific, engaging title based on the medical content (e.g., 'Cardiovascular System Assessment Quiz')",
-  "description": "Clear description of what the quiz covers and its educational value",
+  "title": "Quiz Title",
+  "description": "Quiz description",
   "recommendedTime": 15,
   "questions": [
     {
-      "id": "unique_id",
-      "question": "Question text here?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswer": "Option A",
-      "explanation": "Brief explanation of why this is correct",
+      "id": "q1",
+      "question": "Question text?",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": "A",
+      "explanation": "Why A is correct",
+      "points": 1
+    }
+  ]
+}`
+          : `Create ${questionsToGenerate} medical multiple-choice questions from the source material.
+
+Rules:
+- 4 options per question (A, B, C, D)
+- Test different medical concepts, no duplicates
+- Use appropriate medical terminology
+- Clear, unambiguous questions
+- One correct answer per question
+- Include title, description, and questions in JSON format
+
+JSON format:
+{
+  "title": "Medical Quiz Title",
+  "description": "Quiz description",
+  "recommendedTime": 15,
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Question text?",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": "A",
+      "explanation": "Why A is correct",
       "points": 1
     }
   ]
 }`;
 
-        const userPrompt = `MEDICAL SOURCE MATERIAL:
-${sourceText}
+        const userPrompt = isNonMedical
+          ? `Source: ${sourceText}
 
-Create EXACTLY ${questionsToGenerate} comprehensive multiple-choice questions covering ALL important concepts in this material. Focus on different aspects: definitions, clinical applications, mechanisms, symptoms, treatments, anatomy, etc.`;
+Create ${questionsToGenerate} questions covering key concepts.`
+          : `Medical source: ${sourceText}
+
+Create ${questionsToGenerate} medical questions covering key concepts.`;
 
         const response = await fetchAI(
           [{ role: 'user', content: userPrompt }],
@@ -353,6 +421,12 @@ Create EXACTLY ${questionsToGenerate} comprehensive multiple-choice questions co
           };
         }
 
+        setProgress({
+          stage: 'finalizing',
+          message: 'Finalizing quiz details...',
+          progress: 90
+        });
+
         // Calculate time based on question count (2 minutes per question)
         const calculatedTime = Math.max(5, questions.length * 2); // Minimum 5 minutes, 2 minutes per question
 
@@ -360,8 +434,8 @@ Create EXACTLY ${questionsToGenerate} comprehensive multiple-choice questions co
         return {
           success: true,
           questions,
-          title: parsedResponse.title || 'Medical Knowledge Quiz',
-          description: parsedResponse.description || 'Test your understanding of medical concepts with this comprehensive quiz.',
+          title: parsedResponse.title || (isNonMedical ? 'Knowledge Quiz' : 'Medical Knowledge Quiz'),
+          description: parsedResponse.description || (isNonMedical ? 'Test your understanding of the concepts with this comprehensive quiz.' : 'Test your understanding of medical concepts with this comprehensive quiz.'),
           recommendedTime: calculatedTime,
           sourceText,
           extractionMethod: extractionMethod
@@ -370,106 +444,143 @@ Create EXACTLY ${questionsToGenerate} comprehensive multiple-choice questions co
         // Multiple chunks - process each chunk and combine results
         const allQuestions: QuizQuestion[] = [];
         
+        setProgress({
+          stage: 'generating',
+          message: 'Generating questions with AI...',
+          progress: 50
+        });
+
         // Generate title and description from the first chunk
         console.log('Generating title and description from first chunk...');
-        const titleDescriptionResult = await generateTitleAndDescription(chunks[0], sourceText.length);
+        const titleDescriptionResult = await generateTitleAndDescription(chunks[0], sourceText.length, isNonMedical);
         const quizTitle = titleDescriptionResult.title;
         const quizDescription = titleDescriptionResult.description;
         const recommendedTime = titleDescriptionResult.recommendedTime;
 
-        for (let i = 0; i < chunks.length; i++) {
-          const chunk = chunks[i];
+        // Process chunks in parallel for better performance
+        const chunkPromises = chunks.map(async (chunk, i) => {
           console.log(`Processing chunk ${i + 1}/${chunks.length} (${chunk.length} characters)`);
 
-          const systemPrompt = `You are an expert educational content creator specializing in medical education. Your task is to create high-quality multiple-choice questions (MCQs) from the provided source material.
+          const systemPrompt = isNonMedical
+            ? `Create ${questionsPerChunk} multiple-choice questions from the text.
 
-CRITICAL RULES:
-- Create EXACTLY ${questionsPerChunk} comprehensive questions from this text segment
-- Generate questions on EVERY important concept, definition, process, and detail mentioned
-- NO DUPLICATE questions - each question must test a different concept
-- Cover ALL topics: definitions, procedures, symptoms, treatments, anatomy, physiology, pharmacology, etc.
-- Each question must have exactly 4 options (A, B, C, D)
-- Questions should test understanding, application, and critical thinking, not just memorization
-- Make questions challenging but fair
-- Ensure only one correct answer per question
-- Provide clear, unambiguous questions
-- Make incorrect options plausible but clearly distinguishable from the correct answer
-- Use medical terminology appropriately
-- Questions should be suitable for medical students
+Rules:
+- 4 options per question (A, B, C, D)
+- Test different concepts, no duplicates
+- Clear, unambiguous questions
+- One correct answer per question
 
-Format your response as JSON with this exact structure:
+JSON format:
 {
   "questions": [
     {
-      "id": "unique_id",
-      "question": "Question text here?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswer": "Option A",
-      "explanation": "Brief explanation of why this is correct",
+      "id": "q1",
+      "question": "Question text?",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": "A",
+      "explanation": "Why A is correct",
+      "points": 1
+    }
+  ]
+}`
+            : `Create ${questionsPerChunk} medical multiple-choice questions from the text.
+
+Rules:
+- 4 options per question (A, B, C, D)
+- Test different medical concepts, no duplicates
+- Use appropriate medical terminology
+- Clear, unambiguous questions
+- One correct answer per question
+
+JSON format:
+{
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Question text?",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": "A",
+      "explanation": "Why A is correct",
       "points": 1
     }
   ]
 }`;
 
-          const userPrompt = `MEDICAL TEXT SEGMENT ${i + 1}/${chunks.length}:
-${chunk}
+          const userPrompt = isNonMedical
+            ? `Text: ${chunk}
 
-Create EXACTLY ${questionsPerChunk} comprehensive multiple-choice questions covering ALL important concepts in this segment. Focus on different aspects: definitions, clinical applications, mechanisms, symptoms, treatments, anatomy, etc.`;
+Create ${questionsPerChunk} questions covering key concepts.`
+            : `Medical text: ${chunk}
 
-          const response = await fetchAI(
-            [{ role: 'user', content: userPrompt }],
-            {
-              systemPrompt,
-              temperature,
-              maxTokens,
-              responseFormat: 'json'
-            }
-          );
+Create ${questionsPerChunk} medical questions covering key concepts.`;
 
-          // Parse the JSON response for this chunk using robust parser
-          let parsedResponse: { 
-            questions?: Array<{
-              id?: string;
-              question?: string;
-              options?: string[];
-              correctAnswer?: string;
-              explanation?: string;
-              points?: number;
-            }> 
-          };
           try {
-            parsedResponse = parseAIResponse(response.content);
-          } catch (parseError) {
-            console.error(`Failed to parse response for chunk ${i + 1}:`, parseError);
-            console.error('Response content:', response.content);
-            console.warn(`Skipping chunk ${i + 1} due to parsing error`);
-            continue;
-          }
+            const response = await fetchAI(
+              [{ role: 'user', content: userPrompt }],
+              {
+                systemPrompt,
+                temperature,
+                maxTokens,
+                responseFormat: 'json'
+              }
+            );
 
-          // Validate and format questions from this chunk
-          if (parsedResponse.questions && Array.isArray(parsedResponse.questions)) {
-            for (let j = 0; j < parsedResponse.questions.length; j++) {
-              const q = parsedResponse.questions[j];
-              // More flexible validation - allow 3-6 options instead of exactly 4
-              if (q.question && q.options && Array.isArray(q.options) && q.options.length >= 3 && q.options.length <= 6 && q.correctAnswer) {
-                allQuestions.push({
-                  id: q.id || `q_${i + 1}_${j + 1}`,
-                  question: q.question.trim(),
-                  options: q.options.map(opt => String(opt).trim()),
-                  correctAnswer: String(q.correctAnswer).trim(),
-                  explanation: q.explanation ? String(q.explanation).trim() : '',
-                  points: typeof q.points === 'number' ? q.points : 1
-                });
-              } else {
-                console.warn(`Skipping invalid question ${i + 1}_${j + 1}:`, q);
+            // Parse the JSON response for this chunk
+            let parsedResponse: { 
+              questions?: Array<{
+                id?: string;
+                question?: string;
+                options?: string[];
+                correctAnswer?: string;
+                explanation?: string;
+                points?: number;
+              }> 
+            };
+            
+            try {
+              parsedResponse = parseAIResponse(response.content);
+            } catch (parseError) {
+              console.error(`Failed to parse response for chunk ${i + 1}:`, parseError);
+              return [];
+            }
+
+            // Validate and format questions from this chunk
+            const chunkQuestions: QuizQuestion[] = [];
+            if (parsedResponse.questions && Array.isArray(parsedResponse.questions)) {
+              for (let j = 0; j < parsedResponse.questions.length; j++) {
+                const q = parsedResponse.questions[j];
+                if (q.question && q.options && Array.isArray(q.options) && q.options.length >= 3 && q.options.length <= 6 && q.correctAnswer) {
+                  chunkQuestions.push({
+                    id: q.id || `q_${i + 1}_${j + 1}`,
+                    question: q.question.trim(),
+                    options: q.options.map(opt => String(opt).trim()),
+                    correctAnswer: String(q.correctAnswer).trim(),
+                    explanation: q.explanation ? String(q.explanation).trim() : '',
+                    points: typeof q.points === 'number' ? q.points : 1
+                  });
+                }
               }
             }
+            
+            return chunkQuestions;
+          } catch (error) {
+            console.error(`Error processing chunk ${i + 1}:`, error);
+            return [];
           }
+        });
 
-          // Add small delay between API calls to avoid rate limiting
-          if (i < chunks.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
+        // Wait for all chunks to process in parallel
+        const chunkResults = await Promise.all(chunkPromises);
+        
+        setProgress({
+          stage: 'finalizing',
+          message: 'Finalizing quiz details...',
+          progress: 90
+        });
+        
+        // Flatten all questions from all chunks
+        for (const chunkQuestions of chunkResults) {
+          allQuestions.push(...chunkQuestions);
         }
 
         // Remove duplicates - for chunked processing, return ALL unique questions
@@ -513,6 +624,7 @@ Create EXACTLY ${questionsPerChunk} comprehensive multiple-choice questions cove
   return {
     generateQuizQuestions,
     isGenerating,
-    error
+    error,
+    progress
   };
 }

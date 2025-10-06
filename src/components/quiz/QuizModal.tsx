@@ -113,7 +113,19 @@ export function QuizModal({
               timeSpent: currentTimeElapsed
             };
             
-            const updatedAnswers = [...currentAnswers, newAnswer];
+            // Check if we already have an answer for this question (user went back and changed it)
+            const existingAnswerIndex = currentAnswers.findIndex(a => a.questionId === currentQuestion.id);
+            let updatedAnswers: QuizAnswer[];
+            
+            if (existingAnswerIndex >= 0) {
+              // Replace existing answer
+              updatedAnswers = [...currentAnswers];
+              updatedAnswers[existingAnswerIndex] = newAnswer;
+            } else {
+              // Add new answer
+              updatedAnswers = [...currentAnswers, newAnswer];
+            }
+            
             setAnswers(updatedAnswers);
             
             // Move to next question or finish
@@ -121,7 +133,17 @@ export function QuizModal({
               const totalTime = currentStartTime ? Math.floor((Date.now() - currentStartTime.getTime()) / 1000) : 0;
               const correctAnswers = updatedAnswers.filter(a => a.isCorrect).length;
               const totalQuestions = currentQuiz.questions.length;
-              const score = Math.round((correctAnswers / totalQuestions) * 100);
+              
+              // Debug logging to track scoring issues
+              console.log('Quiz scoring debug (timeout):', {
+                totalAnswers: updatedAnswers.length,
+                correctAnswers,
+                totalQuestions,
+                answers: updatedAnswers.map(a => ({ questionId: a.questionId, isCorrect: a.isCorrect }))
+              });
+              
+              // Ensure score never exceeds 100% due to any calculation errors
+              const score = Math.min(100, Math.round((correctAnswers / totalQuestions) * 100));
 
               const result: QuizResult = {
                 totalQuestions,
@@ -198,7 +220,7 @@ export function QuizModal({
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
     
-    // Add answer to our internal state
+    // Create new answer
     const newAnswer: QuizAnswer = {
       questionId: currentQuestion.id,
       selectedAnswer,
@@ -206,7 +228,19 @@ export function QuizModal({
       timeSpent: timeElapsed
     };
     
-    const updatedAnswers = [...answers, newAnswer];
+    // Check if we already have an answer for this question (user went back and changed it)
+    const existingAnswerIndex = answers.findIndex(a => a.questionId === currentQuestion.id);
+    let updatedAnswers: QuizAnswer[];
+    
+    if (existingAnswerIndex >= 0) {
+      // Replace existing answer
+      updatedAnswers = [...answers];
+      updatedAnswers[existingAnswerIndex] = newAnswer;
+    } else {
+      // Add new answer
+      updatedAnswers = [...answers, newAnswer];
+    }
+    
     setAnswers(updatedAnswers);
     setSelectedAnswer('');
     setTimeElapsed(0);
@@ -220,7 +254,17 @@ export function QuizModal({
       
       const correctAnswers = updatedAnswers.filter(a => a.isCorrect).length;
       const totalQuestions = quiz.questions.length;
-      const score = Math.round((correctAnswers / totalQuestions) * 100);
+      
+      // Debug logging to track scoring issues
+      console.log('Quiz scoring debug:', {
+        totalAnswers: updatedAnswers.length,
+        correctAnswers,
+        totalQuestions,
+        answers: updatedAnswers.map(a => ({ questionId: a.questionId, isCorrect: a.isCorrect }))
+      });
+      
+      // Ensure score never exceeds 100% due to any calculation errors
+      const score = Math.min(100, Math.round((correctAnswers / totalQuestions) * 100));
 
       const result: QuizResult = {
         totalQuestions,

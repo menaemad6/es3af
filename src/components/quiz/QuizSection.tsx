@@ -34,11 +34,11 @@ export function QuizSection() {
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [showRetakeConfirmation, setShowRetakeConfirmation] = useState<Quiz | null>(null);
 
-  const { generateQuizQuestions, isGenerating, error: generationError } = useQuizGeneration({
-    questionsPerChunk: 12,
-    maxChunkSize: 5000, // Reduced chunk size to trigger chunking more easily
+  const { generateQuizQuestions, isGenerating, error: generationError, progress } = useQuizGeneration({
+    questionsPerChunk: 8, // Reduced for faster processing
+    maxChunkSize: 3000, // Smaller chunks for faster processing
     temperature: 0.3,
-    maxTokens: 4000
+    maxTokens: 2000 // Reduced token usage
   });
   
   const [isProcessingPDF, setIsProcessingPDF] = useState(false);
@@ -214,6 +214,7 @@ export function QuizSection() {
                 onSubmit={handleCreateQuiz}
                 isLoading={isGenerating || isProcessingPDF}
                 error={generationError || undefined}
+                loadingProgress={progress || undefined}
               />
             </div>
           </div>

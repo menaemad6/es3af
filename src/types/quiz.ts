@@ -43,6 +43,7 @@ export interface QuizCreationData {
   source: string;
   sourceType: 'text' | 'pdf';
   pdfFile?: File;
+  isNonMedical?: boolean;
 }
 
 export interface QuizState {

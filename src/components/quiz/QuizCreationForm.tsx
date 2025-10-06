@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
 import { Loader2, FileText, Upload, X, Brain, Zap, Target, Clock, CheckCircle } from 'lucide-react';
 import { QuizCreationData } from '@/types/quiz';
 
@@ -25,13 +26,21 @@ export function QuizCreationForm({ onSubmit, isLoading = false, error, loadingPr
     title: '', // Will be auto-generated
     description: '', // Will be auto-generated
     source: '',
-    sourceType: 'pdf'
+    sourceType: 'pdf',
+    isNonMedical: false
   });
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (field: keyof QuizCreationData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSwitchChange = (field: keyof QuizCreationData, value: boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -129,6 +138,7 @@ export function QuizCreationForm({ onSubmit, isLoading = false, error, loadingPr
     if (!isLoading) return null;
 
     const isPdfProcessing = formData.sourceType === 'pdf' && pdfFile;
+    const isNonMedical = formData.isNonMedical || false;
     
     // Show enhanced loading for PDF with progress, or for any processing with progress data
     if ((isPdfProcessing && loadingProgress) || (!isPdfProcessing && loadingProgress)) {
@@ -146,6 +156,28 @@ export function QuizCreationForm({ onSubmit, isLoading = false, error, loadingPr
         analyzing: 'text-purple-600',
         generating: 'text-green-600',
         finalizing: 'text-orange-600'
+      };
+
+      const stageDescriptions = {
+        extracting: isPdfProcessing 
+          ? 'Extracting text from your PDF using advanced OCR technology...'
+          : 'Processing your source text and preparing for analysis...',
+        analyzing: 'Analyzing content structure and identifying key concepts...',
+        generating: isNonMedical 
+          ? 'Generating comprehensive questions using AI...'
+          : 'Generating medically accurate questions using AI...',
+        finalizing: 'Finalizing quiz details and optimizing question quality...'
+      };
+
+      const stageTips = {
+        extracting: isPdfProcessing 
+          ? 'OCR processing ensures accurate text extraction from scanned documents'
+          : 'Text analysis helps identify the most important concepts to test',
+        analyzing: 'Content analysis ensures questions cover all important topics',
+        generating: isNonMedical 
+          ? 'AI generates questions tailored to your subject matter'
+          : 'AI generates medically accurate questions with proper terminology',
+        finalizing: 'Quality checks ensure all questions are clear and relevant'
       };
 
       return (
@@ -180,51 +212,76 @@ export function QuizCreationForm({ onSubmit, isLoading = false, error, loadingPr
 
               {/* Stage Message */}
               <div className="space-y-2">
-                <h3 className="font-semibold text-lg">Creating Your Quiz</h3>
-                <p className="text-muted-foreground text-sm">{message}</p>
+                <h3 className="font-semibold text-lg">
+                  {isNonMedical ? 'Creating Your Knowledge Quiz' : 'Creating Your Medical Quiz'}
+                </h3>
+                <p className="text-muted-foreground text-sm font-medium">{message}</p>
+                <p className="text-xs text-muted-foreground">{stageDescriptions[stage]}</p>
               </div>
 
               {/* Processing Steps */}
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-sm">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                    stage === 'extracting' ? 'bg-primary text-primary-foreground' : 
+                    stage === 'extracting' ? 'bg-primary text-primary-foreground animate-pulse' : 
                     ['analyzing', 'generating', 'finalizing'].includes(stage) ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
                   }`}>
                     {['analyzing', 'generating', 'finalizing'].includes(stage) ? <CheckCircle className="h-4 w-4" /> : '1'}
                   </div>
-                  <span className={stage === 'extracting' ? 'font-medium' : ''}>
-                    {isPdfProcessing ? 'Extracting text from PDF' : 'Processing source text'}
-                  </span>
+                  <div className="flex-1">
+                    <span className={stage === 'extracting' ? 'font-medium text-primary' : ''}>
+                      {isPdfProcessing ? 'Extracting text from PDF' : 'Processing source text'}
+                    </span>
+                    {stage === 'extracting' && (
+                      <p className="text-xs text-muted-foreground mt-1">{stageTips.extracting}</p>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="flex items-center gap-3 text-sm">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                    stage === 'analyzing' ? 'bg-primary text-primary-foreground' : 
+                    stage === 'analyzing' ? 'bg-primary text-primary-foreground animate-pulse' : 
                     ['generating', 'finalizing'].includes(stage) ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
                   }`}>
                     {['generating', 'finalizing'].includes(stage) ? <CheckCircle className="h-4 w-4" /> : '2'}
                   </div>
-                  <span className={stage === 'analyzing' ? 'font-medium' : ''}>Analyzing content structure</span>
+                  <div className="flex-1">
+                    <span className={stage === 'analyzing' ? 'font-medium text-primary' : ''}>Analyzing content structure</span>
+                    {stage === 'analyzing' && (
+                      <p className="text-xs text-muted-foreground mt-1">{stageTips.analyzing}</p>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="flex items-center gap-3 text-sm">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                    stage === 'generating' ? 'bg-primary text-primary-foreground' : 
+                    stage === 'generating' ? 'bg-primary text-primary-foreground animate-pulse' : 
                     stage === 'finalizing' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
                   }`}>
                     {stage === 'finalizing' ? <CheckCircle className="h-4 w-4" /> : '3'}
                   </div>
-                  <span className={stage === 'generating' ? 'font-medium' : ''}>Generating questions with AI</span>
+                  <div className="flex-1">
+                    <span className={stage === 'generating' ? 'font-medium text-primary' : ''}>
+                      {isNonMedical ? 'Generating questions with AI' : 'Generating medical questions with AI'}
+                    </span>
+                    {stage === 'generating' && (
+                      <p className="text-xs text-muted-foreground mt-1">{stageTips.generating}</p>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="flex items-center gap-3 text-sm">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                    stage === 'finalizing' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                    stage === 'finalizing' ? 'bg-primary text-primary-foreground animate-pulse' : 'bg-muted text-muted-foreground'
                   }`}>
                     4
                   </div>
-                  <span className={stage === 'finalizing' ? 'font-medium' : ''}>Finalizing quiz details</span>
+                  <div className="flex-1">
+                    <span className={stage === 'finalizing' ? 'font-medium text-primary' : ''}>Finalizing quiz details</span>
+                    {stage === 'finalizing' && (
+                      <p className="text-xs text-muted-foreground mt-1">{stageTips.finalizing}</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -233,11 +290,24 @@ export function QuizCreationForm({ onSubmit, isLoading = false, error, loadingPr
                 <div className="flex items-start gap-2">
                   <Clock className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                   <div className="text-xs text-muted-foreground">
-                    <p className="font-medium mb-1">Why does this take time?</p>
+                    <p className="font-medium mb-1">
+                      {stage === 'extracting' ? 'Why does extraction take time?' :
+                       stage === 'analyzing' ? 'Why does analysis take time?' :
+                       stage === 'generating' ? 'Why does generation take time?' :
+                       'Why does finalization take time?'}
+                    </p>
                     <p>
-                      {isPdfProcessing 
-                        ? "We're carefully processing your PDF to extract the best content and generate high-quality, medically accurate questions. This ensures you get the most comprehensive and relevant quiz possible."
-                        : "We're analyzing your content to understand the key concepts and generate high-quality, medically accurate questions. This ensures you get the most comprehensive and relevant quiz possible."
+                      {stage === 'extracting' && isPdfProcessing 
+                        ? "We're using advanced OCR technology to extract text from your PDF with high accuracy. This ensures we capture all the important content for your quiz."
+                        : stage === 'extracting' 
+                        ? "We're processing your text to identify key concepts and prepare them for analysis. This helps us create more targeted questions."
+                        : stage === 'analyzing'
+                        ? "We're analyzing your content structure to identify the most important concepts and topics. This ensures comprehensive question coverage."
+                        : stage === 'generating'
+                        ? isNonMedical 
+                          ? "We're generating comprehensive questions tailored to your subject matter using advanced AI. This ensures high-quality, relevant questions."
+                          : "We're generating medically accurate questions with proper terminology using advanced AI. This ensures clinical relevance and accuracy."
+                        : "We're performing final quality checks and optimizing your quiz for the best learning experience. This ensures all questions are clear and relevant."
                       }
                     </p>
                   </div>
@@ -267,7 +337,9 @@ export function QuizCreationForm({ onSubmit, isLoading = false, error, loadingPr
             </div>
 
             <div className="space-y-2">
-              <h3 className="font-semibold text-lg">Creating Your Quiz</h3>
+              <h3 className="font-semibold text-lg">
+                {isNonMedical ? 'Creating Your Knowledge Quiz' : 'Creating Your Medical Quiz'}
+              </h3>
               <p className="text-muted-foreground text-sm">
                 {isPdfProcessing 
                   ? "Processing your PDF and generating high-quality questions..." 
@@ -284,8 +356,12 @@ export function QuizCreationForm({ onSubmit, isLoading = false, error, loadingPr
                   <p className="font-medium mb-1">Why does this take time?</p>
                   <p>
                     {isPdfProcessing 
-                      ? "We're carefully processing your PDF to extract the best content and generate high-quality, medically accurate questions. This ensures you get the most comprehensive and relevant quiz possible."
-                      : "We're analyzing your content to understand the key concepts and generate high-quality, medically accurate questions. This ensures you get the most comprehensive and relevant quiz possible."
+                      ? isNonMedical
+                        ? "We're carefully processing your PDF to extract the best content and generate high-quality questions tailored to your subject matter. This ensures you get the most comprehensive and relevant quiz possible."
+                        : "We're carefully processing your PDF to extract the best content and generate high-quality, medically accurate questions. This ensures you get the most comprehensive and relevant quiz possible."
+                      : isNonMedical
+                        ? "We're analyzing your content to understand the key concepts and generate high-quality questions tailored to your subject matter. This ensures you get the most comprehensive and relevant quiz possible."
+                        : "We're analyzing your content to understand the key concepts and generate high-quality, medically accurate questions. This ensures you get the most comprehensive and relevant quiz possible."
                     }
                   </p>
                 </div>
@@ -400,6 +476,24 @@ export function QuizCreationForm({ onSubmit, isLoading = false, error, loadingPr
             </Tabs>
           </div>
 
+          {/* Non-Medical Switch */}
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+            <div className="space-y-1">
+              <Label htmlFor="non-medical" className="text-sm font-medium">
+                Non-Medical Quiz
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Enable this to create general knowledge quizzes (e.g., computer science, history, etc.)
+              </p>
+            </div>
+            <Switch
+              id="non-medical"
+              checked={formData.isNonMedical || false}
+              onCheckedChange={(checked) => handleSwitchChange('isNonMedical', checked)}
+              disabled={isLoading}
+            />
+          </div>
+
           {/* Error Display */}
           {error && (
             <Alert variant="destructive">
@@ -416,7 +510,16 @@ export function QuizCreationForm({ onSubmit, isLoading = false, error, loadingPr
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {formData.sourceType === 'pdf' ? 'Processing PDF...' : 'Generating Quiz...'}
+                {loadingProgress ? (
+                  <>
+                    {loadingProgress.stage === 'extracting' && (formData.sourceType === 'pdf' ? 'Extracting PDF...' : 'Processing Text...')}
+                    {loadingProgress.stage === 'analyzing' && 'Analyzing Content...'}
+                    {loadingProgress.stage === 'generating' && (formData.isNonMedical ? 'Generating Questions...' : 'Generating Medical Questions...')}
+                    {loadingProgress.stage === 'finalizing' && 'Finalizing Quiz...'}
+                  </>
+                ) : (
+                  formData.sourceType === 'pdf' ? 'Processing PDF...' : 'Generating Quiz...'
+                )}
               </>
             ) : (
               'Generate Quiz'
